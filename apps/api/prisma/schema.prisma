@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  email        String       @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  attempts     Attempt[]
+  reviewItems  ReviewItem[]
+}
+
+model LessonCategory {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  lessons     Lesson[]
+}
+
+model Lesson {
+  id          Int            @id @default(autoincrement())
+  categoryId  Int
+  title       String
+  level       String
+  category    LessonCategory @relation(fields: [categoryId], references: [id])
+  phrases     LessonPhrase[]
+  reviewItems ReviewItem[]
+}
+
+model LessonPhrase {
+  id          Int       @id @default(autoincrement())
+  lessonId    Int
+  text        String
+  translation String
+  lesson      Lesson    @relation(fields: [lessonId], references: [id])
+  attempts    Attempt[]
+}
+
+model Attempt {
+  id            Int         @id @default(autoincrement())
+  userId         Int
+  lessonPhraseId Int
+  expectedText   String
+  transcript     String
+  confidence     Float
+  score          Int
+  createdAt      DateTime    @default(now())
+  user           User        @relation(fields: [userId], references: [id])
+  lessonPhrase   LessonPhrase @relation(fields: [lessonPhraseId], references: [id])
+  mistakes       Mistake[]
+}
+
+model Mistake {
+  id        Int     @id @default(autoincrement())
+  attemptId Int
+  word      String
+  type      String
+  attempt   Attempt @relation(fields: [attemptId], references: [id])
+}
+
+model ReviewItem {
+  id           Int      @id @default(autoincrement())
+  userId        Int
+  lessonId      Int
+  intervalDays  Int      @default(1)
+  repetitions   Int      @default(0)
+  easeFactor    Float    @default(2.5)
+  dueDate       DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+  lesson        Lesson   @relation(fields: [lessonId], references: [id])
+
+  @@unique([userId, lessonId])
+}
