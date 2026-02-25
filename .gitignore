@@ -1,0 +1,35 @@
+# Generated
+node_modules
+dist
+build
+coverage
+.pnpm-store
+
+# Expo / RN
+.expo
+.expo-shared
+apps/mobile/.expo
+
+# Runtime artifacts
+uploads
+apps/api/uploads
+apps/api/tmp
+tmp
+
+# Audio artifacts
+*.mp3
+*.m4a
+*.wav
+*.aac
+
+# Local DB
+*.db
+*.sqlite
+
+# Env / logs / OS
+.env
+.env.local
+apps/mobile/.env
+apps/api/.env
+*.log
+.DS_Store
