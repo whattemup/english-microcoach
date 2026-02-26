@@ -45,6 +45,8 @@ EXPO_PUBLIC_API_URL=http://localhost:3001
 
 ## 4) Prisma workflow (always use `pnpm exec`)
 
+On Windows, prefer direct `pnpm --filter @emc/api exec prisma ...` commands to avoid shim/path issues.
+
 ```bash
 pnpm --filter @emc/api exec prisma generate
 pnpm --filter @emc/api exec prisma migrate dev
@@ -73,8 +75,8 @@ Symptom: EPERM during Prisma engine rename/generate.
 
 Workaround:
 1. Stop Node/TSX/Expo processes that may lock files.
-2. Remove Prisma generated cache folder:
-   `apps\\api\\node_modules\\.prisma`
+2. Delete Prisma cache folder used by pnpm Prisma client install:
+   `node_modules\\.pnpm\\@prisma+client@<version>_prisma@<version>\\node_modules\\.prisma`
 3. Rerun:
    `pnpm --filter @emc/api exec prisma generate`
 

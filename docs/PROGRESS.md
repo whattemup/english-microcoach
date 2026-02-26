@@ -1,5 +1,13 @@
 # Progress Log
 
+## Baseline (2026-02-26)
+
+- Branch: `work`
+- API: TypeScript build is passing (`tsc -p tsconfig.json`) and service runs on `:3001` in local dev.
+- DB: Docker Compose PostgreSQL local flow is working.
+- Seed: Prisma seed creates 3 categories and 30 lessons.
+- Mobile: Expo app starts; authenticated end-to-end app flow wiring is still in progress.
+
 ## Current status (2026-02-26)
 
 Core local development flow is working on this repository: API builds, database bootstrap works through Docker + Prisma, lesson catalog seeding is in place, and public lesson browsing endpoints are enabled.
