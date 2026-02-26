@@ -21,43 +21,41 @@ function sleep(ms) {
 }
 
 function resolvePrismaCliPath() {
-  try {
-    return require.resolve('prisma/build/index.js', { paths: [repoRoot] });
-  } catch {
-    return path.join(repoRoot, 'node_modules', 'prisma', 'build', 'index.js');
-  }
+  return require.resolve('prisma/build/index.js', { paths: [apiDir, repoRoot] });
 }
 
 function runGenerate() {
-  const prismaCliPath = resolvePrismaCliPath();
+  let result;
 
-  const result = spawnSync(process.execPath, [prismaCliPath, 'generate'], {
-    cwd: apiDir,
-    env: process.env,
-    encoding: 'utf8'
-  });
+  try {
+    const prismaCli = resolvePrismaCliPath();
+    result = spawnSync(process.execPath, [prismaCli, 'generate'], {
+      cwd: apiDir,
+      env: process.env,
+      stdio: 'inherit'
+    });
+  } catch (error) {
+    console.error('Failed to resolve Prisma CLI via require.resolve. Falling back to pnpm exec.');
+    console.error(error);
 
-  if (result.stdout) {
-    process.stdout.write(result.stdout);
-  }
-
-  if (result.stderr) {
-    process.stderr.write(result.stderr);
+    result = spawnSync('cmd.exe', ['/d', '/s', '/c', 'pnpm --filter @emc/api exec prisma generate'], {
+      cwd: repoRoot,
+      env: process.env,
+      stdio: 'inherit'
+    });
   }
 
   return result;
 }
 
-function isRetryableRenameFailure(result) {
+function isRetryableFailure(result) {
   const code = result.error?.code ?? result.error?.errno;
-  const stderr = `${result.stderr ?? ''}`;
-  const combined = `${stderr}\n${result.error?.message ?? ''}`;
+  const combined = `${result.error?.message ?? ''}`;
 
   const hasPermissionCode = code === 'EPERM' || code === 'EACCES';
   const mentionsPermissionCode = /\b(EPERM|EACCES)\b/.test(combined);
-  const mentionsRename = /\brename\b/i.test(combined);
-
-  return (hasPermissionCode || mentionsPermissionCode) && mentionsRename;
+  
+  return hasPermissionCode || mentionsPermissionCode;
 }
 
 for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
@@ -74,9 +72,8 @@ for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
   console.error(
     `\nPrisma generate failed (attempt ${attempt}/${MAX_RETRIES}). exitCode=${exitCode} error.code=${errorCode} error.errno=${errorErrno}`
   );
-  console.error(DEFENDER_HINT);
-
-  const retryable = isRetryableRenameFailure(result);
+  
+  const retryable = isRetryableFailure(result);
   if (!retryable || attempt === MAX_RETRIES) {
     if (Number.isInteger(result.status)) {
       process.exit(result.status);
@@ -88,8 +85,10 @@ for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
 
     process.exit(1);
   }
+  
+  console.error(DEFENDER_HINT);
 
   const delay = BASE_DELAY_MS * 2 ** (attempt - 1);
-  console.warn(`Retrying prisma generate in ${delay}ms due to EPERM/EACCES rename failure...`);
+  console.warn(`Retrying prisma generate in ${delay}ms due to EPERM/EACCES failure...`);
   sleep(delay);
 }
