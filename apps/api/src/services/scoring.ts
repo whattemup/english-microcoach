@@ -43,7 +43,7 @@ export const scoreAttempt = (expectedText: string, transcript: string): ScoreRes
     const a = actual[i];
     if (e && a) {
       if (e === a) highlights.push({ word: a, status: 'correct' });
-      else highlights.push({ word: `${a}→${e}`, status: 'different' });
+      else highlights.push({ word: `${a}→${e}`, status: "different" });
     } else if (e && !a) {
       missing.push(e);
       highlights.push({ word: e, status: 'missing' });
@@ -55,8 +55,7 @@ export const scoreAttempt = (expectedText: string, transcript: string): ScoreRes
 
   const spanishTip =
     score >= 85
-      ? '¡Muy bien! Tu pronunciación y precisión son sólidas.'
-      : 'Consejo: habla más despacio y compara cada palabra con la frase objetivo.';
-
+      ? "¡Muy bien! Tu pronunciación y precisión son sólidas."
+      : "Consejo: habla más despacio y compara cada palabra con la frase objetivo.";
   return { score, highlights, missing, extra, spanishTip };
 };

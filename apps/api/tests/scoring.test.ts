@@ -1,18 +1,23 @@
-import { describe, expect, it } from 'vitest';
-import { scoreAttempt } from '../src/services/scoring.js';
+import { describe, it, expect } from "vitest";
+import { scoreAttempt } from "../src/services/scoring.js";
 
-describe('scoreAttempt', () => {
-  it('returns 100 for exact match', () => {
-    const result = scoreAttempt('Hello how are you', 'Hello how are you');
-    expect(result.score).toBe(100);
-    expect(result.missing).toHaveLength(0);
-    expect(result.extra).toHaveLength(0);
+describe("scoreAttempt", () => {
+  it("returns 100 for exact match", () => {
+    const r = scoreAttempt("Hi everyone, thanks for joining.", "hi everyone thanks for joining");
+    expect(r.score).toBe(100);
+    expect(r.missing.length).toBe(0);
+    expect(r.extra.length).toBe(0);
   });
 
-  it('detects missing and extra words', () => {
-    const result = scoreAttempt('I would like coffee please', 'I would coffee now');
-    expect(result.score).toBeLessThan(100);
-    expect(result.missing.length).toBeGreaterThan(0);
-    expect(result.extra.length).toBeGreaterThan(0);
+  it("detects missing words", () => {
+    const r = scoreAttempt("can you help me with this task", "can you help me");
+    expect(r.score).toBeLessThan(100);
+    expect(r.missing.length).toBeGreaterThan(0);
+  });
+
+  it("detects extra words", () => {
+    const r = scoreAttempt("can you help me with this task", "can you help me with this task please");
+    expect(r.score).toBeLessThan(100);
+    expect(r.extra.length).toBeGreaterThan(0);
   });
 });
