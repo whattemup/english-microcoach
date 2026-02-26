@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { roleplaySchema } from '@emc/shared';
 import { upload } from '../utils/upload.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { transcribeAudio } from '../services/stt.js';
 import { runRoleplay } from '../services/llm.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 router.post('/', upload.single('audio'), asyncHandler(async (req, res) => {
   if (!req.file) {

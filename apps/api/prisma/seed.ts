@@ -29,10 +29,10 @@ async function main(): Promise<void> {
   await prisma.lesson.deleteMany();
   await prisma.lessonCategory.deleteMany();
 
-  const categories = [] as { id: number; name: string }[];
+  const categories: Array<{ id: number; name: string | null }> = [];
   for (const c of categoryData) {
     const created = await prisma.lessonCategory.create({ data: c });
-    categories.push(created);
+    categories.push({ id: created.id, name: created.name });
   }
 
   for (const c of categories) {

@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { reviewSubmitSchema } from '@emc/shared';
 import { prisma } from '../prisma.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { updateSrs } from '../services/srs.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 router.get('/today', asyncHandler(async (req, res) => {
   const items = await prisma.reviewItem.findMany({

@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { loginSchema, refreshSchema, registerSchema } from '@emc/shared';
 import { prisma } from '../prisma.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { comparePassword, hashPassword } from '../services/password.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../services/jwt.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 router.post(
   '/register',

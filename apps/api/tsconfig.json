@@ -3,7 +3,14 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "dist",
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src", "prisma", "tests"]
+  "include": [
+    "src",
+    "src/**/*.d.ts",
+    "prisma",
+    "tests"
+  ]
 }
