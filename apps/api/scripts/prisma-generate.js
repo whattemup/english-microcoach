@@ -86,31 +86,68 @@ function killLockingNodeProcesses() {
 function runGenerate() {
   const command = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
   return spawnSync(command, ['exec', 'prisma', 'generate'], {
-    stdio: 'inherit',
+    stdio: 'pipe',
+    encoding: 'utf8', 
     env: process.env
   });
+}
+function printProcessOutput(label, output) {
+  if (!output) {
+    return;
+  }
+
+  const trimmed = output.trimEnd();
+  if (!trimmed) {
+    return;
+  }
+
+  console.error(`--- prisma generate ${label} ---`);
+  console.error(trimmed);
 }
 
 killLockingNodeProcesses();
 
 for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
   const result = runGenerate();
+  if (result.stdout) {
+    process.stdout.write(result.stdout);
+  }
+  if (result.stderr) {
+    process.stderr.write(result.stderr);
+  }
+
   if (result.status === 0) {
     process.exit(0);
   }
+   const exitCode = Number.isInteger(result.status) ? result.status : null;
+   const signal = result.signal ?? 'none';
+
+   console.error(
+    `\nPrisma generate failed (attempt ${attempt}/${MAX_RETRIES}). exitCode=${exitCode ?? 'null'} signal=${signal}`
+  );
+   printProcessOutput('stdout', result.stdout);
+   printProcessOutput('stderr', result.stderr);
+
+   if (result.error) {
+     console.error('--- prisma generate spawn error ---');
+     console.error(result.error);
+   }
 
   if (attempt < MAX_RETRIES) {
     const delay = BASE_DELAY_MS * 2 ** (attempt - 1);
-    console.warn(`Prisma generate failed (attempt ${attempt}/${MAX_RETRIES}). Retrying in ${delay}ms...`);
+    console.warn(`Retrying prisma generate in ${delay}ms...`);
     sleep(delay);
+    continue;
   }
+
+  if (Number.isInteger(result.status)) {
+    process.exit(result.status);
+  }
+
+  if (result.signal) {
+    process.kill(process.pid, result.signal);
+  }
+
+  process.exit(1);
 }
 
-console.error('\nPrisma generate failed after multiple retries.');
-console.error('If you are on Windows, this is typically caused by file locking from Node processes or antivirus scanning.');
-console.error('Add a Microsoft Defender exclusion for the repository folder and rerun:');
-console.error('1) Open Windows Security > Virus & threat protection > Manage settings.');
-console.error('2) Under Exclusions, click Add or remove exclusions.');
-console.error('3) Add an exclusion for this folder: C:\\Projects\\english-microcoach');
-console.error('4) Re-run: pnpm --filter @emc/api prisma:generate');
-process.exit(1);
