@@ -1,14 +1,11 @@
-import type { AccessTokenPayload } from '../services/jwt.js';
+import type { JwtPayload } from '../services/jwt.js';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: AccessTokenPayload;
+      user?: JwtPayload;
     }
   }
 }
 
-export type AccessTokenPayload = {
-  userId: string;
-  email: string;
-};
+export {};
