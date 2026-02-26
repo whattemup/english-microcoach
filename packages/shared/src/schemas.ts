@@ -16,7 +16,7 @@ export const refreshSchema = z.object({
 });
 
 export const attemptSchema = z.object({
-  lessonPhraseId: z.coerce.number().int().positive(),
+  phraseId: z.coerce.number().int().positive(),
   expectedText: z.string().min(1, 'Texto esperado requerido')
 });
 

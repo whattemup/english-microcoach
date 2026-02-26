@@ -12,5 +12,14 @@ export const register = (name: string, email: string, password: string) => apiRe
 
 export const getCategories = (token: string) => apiRequest<Array<{ id: number; name: string; description: string }>>('/categories', {}, token);
 export const getLessons = (token: string, categoryId: number) => apiRequest<Array<{ id: number; title: string; level: string }>>(`/lessons?categoryId=${categoryId}`, {}, token);
-export const getLesson = (token: string, lessonId: number) => apiRequest<{ id: number; title: string; phrases: Array<{ id: number; text: string; translation: string }> }>(`/lessons/${lessonId}`, {}, token);
-export const getReviewToday = (token: string) => apiRequest<Array<{ id: number; lesson: { title: string } }>>('/review/today', {}, token);
+export const getLesson = (token: string, lessonId: number) =>
+  apiRequest<{ id: number; title: string; phrases: Array<{ id: number; expected: string; translation: string }> }>(`/lessons/${lessonId}`, {}, token);
+
+export const getReviewToday = (token: string) =>
+  apiRequest<
+    Array<{
+      id: number;
+      dueDate: string;
+      phrase: { expected: string; translation: string; lesson: { title: string } };
+    }>
+  >('/review/today', {}, token);

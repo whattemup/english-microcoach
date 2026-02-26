@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.expo
+**/.turbo
+**/.next
+**/.git
+**/.DS_Store
+apps/api/apps/api/uploads
+uploads
+postgres_data

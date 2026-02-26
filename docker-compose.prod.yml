@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: emc
+      POSTGRES_USER: emc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://emc:${POSTGRES_PASSWORD:-change_me}@postgres:5432/emc?schema=public
+      REDIS_URL: redis://redis:6379
+      TRUST_PROXY: "true"
+      # Set these in your production environment / secret manager.
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      MOCK_STT: "false"
+      MOCK_TTS: "false"
+      MOCK_LLM: "false"
+      UPLOAD_DIR: /data/uploads
+      LOG_LEVEL: info
+    ports:
+      - "3001:3001"
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:
+  uploads:
