@@ -7,10 +7,7 @@
       "node"
     ]
   },
-  "include": [
-    "src",
-    "src/**/*.d.ts",
-    "prisma",
-    "tests"
-  ]
+
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "prisma/**/*.ts", "tests/**/*.ts"]
+
 }

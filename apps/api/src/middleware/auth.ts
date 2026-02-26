@@ -10,7 +10,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
   }
   try {
     const token = authHeader.slice(7);
-    req.user = verifyAccessToken(token);
+    req.user = verifyAccessToken(token); // now typed
     next();
   } catch {
     res.status(401).json({ message: 'No autorizado: token inválido' });
