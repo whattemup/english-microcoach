@@ -19,7 +19,7 @@ model User {
 
 model LessonCategory {
   id          Int      @id @default(autoincrement())
-  name        String
+  name        String?
   description String
   lessons     Lesson[]
 }
