@@ -24,7 +24,7 @@ export interface LessonDTO {
 export interface LessonDetailDTO extends LessonDTO {
   phrases: Array<{
     id: number;
-    text: string;
+    expected: string;
     translation: string;
   }>;
 }

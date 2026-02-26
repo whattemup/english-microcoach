@@ -12,12 +12,12 @@
 pnpm install
 ```
 
-## 2) Start PostgreSQL (Docker)
+## 2) Start PostgreSQL (+Redis recommended) (Docker)
 
 From repo root:
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.local.yml up -d
 ```
 
 ## 3) Configure env files
@@ -28,13 +28,16 @@ Copy example and verify at least:
 
 ```env
 DATABASE_URL="postgresql://emc:emc@localhost:5432/emc?schema=public"
-JWT_ACCESS_SECRET="access_secret_dev"
-JWT_REFRESH_SECRET="refresh_secret_dev"
+JWT_ACCESS_SECRET="access_secret_dev__change_me_please"
+JWT_REFRESH_SECRET="refresh_secret_dev__change_me_please"
 JWT_ACCESS_EXPIRES="15m"
 JWT_REFRESH_EXPIRES="7d"
 MOCK_STT=true
 MOCK_TTS=true
 MOCK_LLM=true
+
+# Optional: persistent rate limiting
+REDIS_URL="redis://localhost:6379"
 ```
 
 ### Mobile (`apps/mobile/.env`)

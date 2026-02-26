@@ -13,7 +13,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'LessonDetail'>;
 
 export const LessonDetailScreen: React.FC<Props> = ({ route }) => {
   const { accessToken } = useAuth();
-  const [lesson, setLesson] = useState<{ title: string; phrases: Array<{ id: number; text: string; translation: string }> } | null>(null);
+  const [lesson, setLesson] = useState<{ title: string; phrases: Array<{ id: number; expected: string; translation: string }> } | null>(null);
   const [rec, setRec] = useState<{ stop: () => Promise<string> } | null>(null);
   const [result, setResult] = useState<any>(null);
 
@@ -25,7 +25,7 @@ export const LessonDetailScreen: React.FC<Props> = ({ route }) => {
 
   return <View style={{ flex: 1, padding: 16 }}>
     <Text style={{ fontSize: 20, fontWeight: '700' }}>{lesson?.title}</Text>
-    <Text style={{ marginTop: 12 }}>{phrase?.text}</Text>
+    <Text style={{ marginTop: 12 }}>{phrase?.expected}</Text>
     <Text style={{ color: '#4b5563' }}>{phrase?.translation}</Text>
 
     <PrimaryButton title={rec ? 'Detener grabación' : 'Grabar voz'} onPress={async () => {
@@ -35,8 +35,8 @@ export const LessonDetailScreen: React.FC<Props> = ({ route }) => {
         setRec(null);
         const form = new FormData();
         form.append('audio', { uri, name: 'attempt.m4a', type: 'audio/m4a' } as never);
-        form.append('lessonPhraseId', String(phrase?.id));
-        form.append('expectedText', phrase?.text ?? '');
+        form.append('phraseId', String(phrase?.id));
+        form.append('expectedText', phrase?.expected ?? '');
         const attemptResult = await apiRequest('/attempts', { method: 'POST', body: form }, accessToken ?? undefined);
         setResult(attemptResult);
       }

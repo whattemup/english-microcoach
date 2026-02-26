@@ -9,7 +9,7 @@ const router: ExpressRouter = Router();
 router.get('/today', asyncHandler(async (req, res) => {
   const items = await prisma.reviewItem.findMany({
     where: { userId: req.user!.userId, dueDate: { lte: new Date() } },
-    include: { lesson: true },
+    include: { phrase: { include: { lesson: true } } },
     orderBy: { dueDate: 'asc' }
   });
   res.json(items);
@@ -27,7 +27,7 @@ router.post('/submit', asyncHandler(async (req, res) => {
   dueDate.setDate(dueDate.getDate() + updated.intervalDays);
   const saved = await prisma.reviewItem.update({
     where: { id: item.id },
-    data: { ...updated, dueDate }
+    data: { ...updated, dueDate, lastReviewedAt: new Date() }
   });
   res.json(saved);
 }));
