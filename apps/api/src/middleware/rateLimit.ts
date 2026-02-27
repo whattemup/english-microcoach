@@ -8,8 +8,9 @@ let store: unknown | undefined;
 if (config.redisUrl) {
   // Lazy import to keep local dev light.
   const { default: RedisStore } = await import('rate-limit-redis');
-  const { default: IORedis } = await import('ioredis');
-  const client = new IORedis(config.redisUrl, { maxRetriesPerRequest: 2 });
+  const mod = await import('ioredis');
+  const Redis = (mod as any).default ?? (mod as any);
+  const client = new Redis(config.redisUrl, { maxRetriesPerRequest: 2 });
   store = new RedisStore({
     // rate-limit-redis expects a "sendCommand" client.
     // ioredis already matches that shape.
