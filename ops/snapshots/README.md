@@ -20,6 +20,7 @@ git diff -- ops/snapshots
 ## Security
 
 Snapshots must never include real `.env` files, credentials, tokens, or other secrets.
+- Real `.env` files are excluded; only `*.env.example` are allowed.
 Use exclusions to keep sensitive and high-churn material out of snapshots (for example
 runtime environment files, dependency/vendor directories, build artifacts, and local caches),
 which reduces secret-leak risk and keeps snapshots deterministic.
