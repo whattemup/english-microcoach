@@ -30,6 +30,6 @@ export const upload = multer({
       'audio/ogg',
       'application/octet-stream' // some Android recorders
     ].includes(file.mimetype);
-    cb(ok ? null : new Error('Tipo de archivo no soportado'), ok);
+    cb(ok ? null : (new Error('Tipo de archivo no soportado') as any), ok);
   }
 });
