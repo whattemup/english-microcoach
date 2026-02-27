@@ -1,10 +1,20 @@
 import { config } from '../config.js';
+import { createNotConfiguredLlmProvider } from '../providers/notConfigured.js';
+import { LLMProvider } from '../providers/types.js';
 
 export interface RoleplayResult {
   corrected: string;
   spanishExplanation: string;
   nextSuggestedResponse: string;
 }
+
+const resolveLlmProvider = (): LLMProvider => {
+  switch (config.llmProvider) {
+    case 'not_configured':
+    default:
+      return createNotConfiguredLlmProvider();
+  }
+};
 
 export const runRoleplay = async (context: string, transcript: string): Promise<RoleplayResult> => {
   if (config.mockLlm) {
@@ -14,5 +24,12 @@ export const runRoleplay = async (context: string, transcript: string): Promise<
       nextSuggestedResponse: 'Could you repeat that more slowly, please?'
     };
   }
-  throw new Error('LLM real no configurado. Activa MOCK_LLM=true o integra un proveedor externo.');
+
+  const provider = resolveLlmProvider();
+  const result = await provider.roleplay(context, transcript);
+  return {
+    corrected: result.replyText,
+    spanishExplanation: '',
+    nextSuggestedResponse: result.replyText
+  };
 };

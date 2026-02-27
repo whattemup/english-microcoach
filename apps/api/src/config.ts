@@ -24,6 +24,9 @@ const envSchema = z.object({
   MOCK_STT: z.string().optional(),
   MOCK_TTS: z.string().optional(),
   MOCK_LLM: z.string().optional(),
+  STT_PROVIDER: z.string().default('not_configured'),
+  TTS_PROVIDER: z.string().default('not_configured'),
+  LLM_PROVIDER: z.string().default('not_configured'),
 
   // Uploads
   UPLOAD_DIR: z.string().default('apps/api/apps/api/uploads'),
@@ -52,6 +55,19 @@ if (!parsed.success) {
 
 const env = parsed.data;
 const isProd = env.NODE_ENV === 'production';
+const mockStt = boolFromEnv(env.MOCK_STT, !isProd);
+const mockTts = boolFromEnv(env.MOCK_TTS, !isProd);
+const mockLlm = boolFromEnv(env.MOCK_LLM, !isProd);
+
+if (!mockStt && env.STT_PROVIDER === 'not_configured') {
+  throw new Error('Invalid environment configuration: STT_PROVIDER must be set when MOCK_STT=false');
+}
+if (!mockTts && env.TTS_PROVIDER === 'not_configured') {
+  throw new Error('Invalid environment configuration: TTS_PROVIDER must be set when MOCK_TTS=false');
+}
+if (!mockLlm && env.LLM_PROVIDER === 'not_configured') {
+  throw new Error('Invalid environment configuration: LLM_PROVIDER must be set when MOCK_LLM=false');
+}
 
 export const config = {
   nodeEnv: env.NODE_ENV,
@@ -64,9 +80,12 @@ export const config = {
   jwtAccessExpires: env.JWT_ACCESS_EXPIRES,
   jwtRefreshExpires: env.JWT_REFRESH_EXPIRES,
 
-  mockStt: boolFromEnv(env.MOCK_STT, !isProd),
-  mockTts: boolFromEnv(env.MOCK_TTS, !isProd),
-  mockLlm: boolFromEnv(env.MOCK_LLM, !isProd),
+  mockStt,
+  mockTts,
+  mockLlm,
+  sttProvider: env.STT_PROVIDER,
+  ttsProvider: env.TTS_PROVIDER,
+  llmProvider: env.LLM_PROVIDER,
 
   uploadDir: env.UPLOAD_DIR,
   maxUploadBytes: env.MAX_UPLOAD_MB * 1024 * 1024,

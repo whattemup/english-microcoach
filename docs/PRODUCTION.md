@@ -45,6 +45,15 @@ curl -sS http://localhost:3001/health
 curl -sS http://localhost:3001/ready
 ```
 
+
+### Provider scaffolding environment variables
+
+- `STT_PROVIDER`
+- `TTS_PROVIDER`
+- `LLM_PROVIDER`
+
+Defaults are `not_configured`. If you set any `MOCK_*` flag to `false`, you must set the corresponding `*_PROVIDER` to a real provider value (real provider integrations are not implemented yet in this scaffold).
+
 ## Mobile production
 
 For Expo/React Native, use EAS Build + EAS Update.
