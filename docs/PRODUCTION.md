@@ -8,6 +8,7 @@ This repo is set up to run locally with Docker Compose and to deploy the API as 
 - Health (`/health`) + readiness (`/ready`) endpoints
 - Structured request logging + redaction
 - Rate limiting (Redis-backed when `REDIS_URL` is set)
+- If `REDIS_URL` is set, `/ready` reflects Redis availability; the API still runs using in-memory fallback rate limiting if Redis is down.
 - Safer uploads (size limit + audio-only allowlist)
 - Graceful shutdown on SIGTERM/SIGINT
 - GitHub Actions CI (build + unit tests)
