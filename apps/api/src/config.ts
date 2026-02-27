@@ -29,7 +29,8 @@ const envSchema = z.object({
   LLM_PROVIDER: z.string().default('not_configured'),
 
   // Uploads
-  UPLOAD_DIR: z.string().default('apps/api/apps/api/uploads'),
+  // Relative to API working directory (apps/api in local dev)
+  UPLOAD_DIR: z.string().default('uploads'),
   MAX_UPLOAD_MB: z.coerce.number().int().positive().default(12),
 
   // CORS
