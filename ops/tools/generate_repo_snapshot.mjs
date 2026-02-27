@@ -18,6 +18,10 @@ const excludedNames = new Set([
 const snapshotsDir = path.join(repoRoot, 'ops', 'snapshots');
 const fileIndexPath = path.join(snapshotsDir, 'FILE_INDEX.json');
 const repoSnapshotPath = path.join(snapshotsDir, 'REPO_SNAPSHOT.md');
+const excludedRelativePaths = new Set([
+  'ops/snapshots/FILE_INDEX.json',
+  'ops/snapshots/REPO_SNAPSHOT.md',
+]);
 
 function toPosix(relativePath) {
   return relativePath.split(path.sep).join('/');
@@ -25,6 +29,19 @@ function toPosix(relativePath) {
 
 function compareLex(a, b) {
   return a.localeCompare(b, 'en');
+}
+
+function isExcluded(entryName, entryRelativePath = '') {
+  if (excludedNames.has(entryName)) {
+    return true;
+  }
+
+  if (entryName === '.env') {
+    return true;
+  }
+
+  const relativePosix = toPosix(entryRelativePath);
+  return excludedRelativePaths.has(relativePosix);
 }
 
 async function readDirSorted(dir) {
@@ -38,11 +55,11 @@ async function walkFiles(dir, relativeDir = '') {
   const files = [];
 
   for (const entry of entries) {
-    if (excludedNames.has(entry.name)) {
+    const entryRelative = relativeDir ? path.join(relativeDir, entry.name) : entry.name;
+    if (isExcluded(entry.name, entryRelative)) {
       continue;
     }
 
-    const entryRelative = relativeDir ? path.join(relativeDir, entry.name) : entry.name;
     const entryFullPath = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
@@ -65,11 +82,11 @@ async function buildTopLevelTree(maxDepth = 4) {
 
     const entries = await readDirSorted(absDir);
     for (const entry of entries) {
-      if (excludedNames.has(entry.name)) {
+      const entryRel = relDir ? path.join(relDir, entry.name) : entry.name;
+      if (isExcluded(entry.name, entryRel)) {
         continue;
       }
 
-      const entryRel = relDir ? path.join(relDir, entry.name) : entry.name;
       const entryDisplay = toPosix(entryRel);
       lines.push(`${'  '.repeat(depth + 1)}- ${entryDisplay}${entry.isDirectory() ? '/' : ''}`);
 
