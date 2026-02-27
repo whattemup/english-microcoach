@@ -68,7 +68,10 @@ const corsOptions: CorsOptionsDelegate<Request> = (req, callback) => {
 
 app.use(cors(corsOptions));
 
-app.use(apiRateLimit);
+app.use((req, res, next) => {
+  if (req.path === '/health' || req.path === '/ready') return next();
+  return apiRateLimit(req, res, next);
+});
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
 app.use('/uploads', express.static(uploadsAbsolute, { maxAge: config.isProd ? '7d' : 0 }));
