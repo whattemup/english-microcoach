@@ -1,5 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { promisify } from 'node:util';
+import { execFile } from 'node:child_process';
 
 const repoRoot = process.cwd();
 const excludedNames = new Set([
@@ -31,6 +33,8 @@ function compareLex(a, b) {
   return a.localeCompare(b, 'en');
 }
 
+const execFileAsync = promisify(execFile);
+
 function isExcluded(entryName, entryRelativePath = '') {
   if (excludedNames.has(entryName)) {
     return true;
@@ -44,99 +48,106 @@ function isExcluded(entryName, entryRelativePath = '') {
   return excludedRelativePaths.has(relativePosix);
 }
 
-async function readDirSorted(dir) {
-  const entries = await fs.readdir(dir, { withFileTypes: true });
-  entries.sort((a, b) => compareLex(a.name, b.name));
-  return entries;
+async function getTrackedFiles() {
+  try {
+    const { stdout } = await execFileAsync('git', ['ls-files', '-z'], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      maxBuffer: 20 * 1024 * 1024,
+    });
+
+    return stdout
+      .split('\u0000')
+      .filter(Boolean)
+      .map((relativePath) => toPosix(relativePath))
+      .filter((relativePath) => !isExcluded(path.basename(relativePath), relativePath))
+      .sort(compareLex);
+  } catch (error) {
+    console.error('Failed to list tracked files via `git ls-files -z`.');
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  }
 }
 
-async function walkFiles(dir, relativeDir = '') {
-  const entries = await readDirSorted(dir);
-  const files = [];
+function createTreeFromFiles(files) {
+  const root = new Map();
 
-  for (const entry of entries) {
-    const entryRelative = relativeDir ? path.join(relativeDir, entry.name) : entry.name;
-    if (isExcluded(entry.name, entryRelative)) {
-      continue;
-    }
-
-    const entryFullPath = path.join(dir, entry.name);
-
-    if (entry.isDirectory()) {
-      files.push(...(await walkFiles(entryFullPath, entryRelative)));
-    } else if (entry.isFile()) {
-      files.push(toPosix(entryRelative));
+  for (const filePath of files) {
+    const segments = filePath.split('/');
+    let current = root;
+    for (const segment of segments) {
+      if (!current.has(segment)) {
+        current.set(segment, new Map());
+      }
+      current = current.get(segment);
     }
   }
 
-  return files;
+  return root;
 }
 
-async function buildTopLevelTree(maxDepth = 4) {
+function buildTopLevelTree(files, maxDepth = 4) {
   const lines = ['.'];
+  const tree = createTreeFromFiles(files);
 
-  async function visit(absDir, relDir, depth) {
+  function visit(nodes, currentPath, depth) {
     if (depth >= maxDepth) {
       return;
     }
 
-    const entries = await readDirSorted(absDir);
-    for (const entry of entries) {
-      const entryRel = relDir ? path.join(relDir, entry.name) : entry.name;
-      if (isExcluded(entry.name, entryRel)) {
-        continue;
-      }
+    const sortedEntries = [...nodes.entries()].sort(([a], [b]) => compareLex(a, b));
 
-      const entryDisplay = toPosix(entryRel);
-      lines.push(`${'  '.repeat(depth + 1)}- ${entryDisplay}${entry.isDirectory() ? '/' : ''}`);
+    for (const [name, children] of sortedEntries) {
+      const entryRel = currentPath ? `${currentPath}/${name}` : name;
+      const isDirectory = children.size > 0;
+      lines.push(`${'  '.repeat(depth + 1)}- ${entryRel}${isDirectory ? '/' : ''}`);
 
-      if (entry.isDirectory()) {
-        await visit(path.join(absDir, entry.name), entryRel, depth + 1);
+      if (isDirectory) {
+        visit(children, entryRel, depth + 1);
       }
     }
   }
 
-  await visit(repoRoot, '', 0);
+  visit(tree, '', 0);
   return lines;
 }
 
-async function listSubdirectories(parentRelative) {
-  const abs = path.join(repoRoot, parentRelative);
-  try {
-    const entries = await readDirSorted(abs);
-    return entries
-      .filter((entry) => entry.isDirectory() && !excludedNames.has(entry.name))
-      .map((entry) => `${parentRelative}/${entry.name}`);
-  } catch {
-    return [];
+function listSubdirectories(parentRelative, trackedFiles) {
+  const prefix = `${parentRelative}/`;
+  const subdirectories = new Set();
+
+  for (const filePath of trackedFiles) {
+    if (!filePath.startsWith(prefix)) {
+      continue;
+    }
+
+    const remainder = filePath.slice(prefix.length);
+    const [subdir] = remainder.split('/');
+    if (subdir && !excludedNames.has(subdir)) {
+      subdirectories.add(`${parentRelative}/${subdir}`);
+    }
   }
+
+  return [...subdirectories].sort(compareLex);
 }
 
-async function fileExists(relativeFilePath) {
-  try {
-    const stat = await fs.stat(path.join(repoRoot, relativeFilePath));
-    return stat.isFile();
-  } catch {
-    return false;
-  }
+function fileExists(relativeFilePath, trackedFilesSet) {
+  return trackedFilesSet.has(relativeFilePath);
 }
 
-async function findTsconfigFiles(projectRelative) {
-  const abs = path.join(repoRoot, projectRelative);
-  try {
-    const entries = await readDirSorted(abs);
-    return entries
-      .filter((entry) => entry.isFile() && /^tsconfig.*\.json$/u.test(entry.name))
-      .map((entry) => `${projectRelative}/${entry.name}`);
-  } catch {
-    return [];
-  }
+function findTsconfigFiles(projectRelative, trackedFiles) {
+  const prefix = `${projectRelative}/`;
+  return trackedFiles
+    .filter((filePath) => filePath.startsWith(prefix))
+    .filter((filePath) => /^tsconfig.*\.json$/u.test(filePath.slice(prefix.length)))
+    .sort(compareLex);
 }
 
-async function collectProjectEntries() {
+function collectProjectEntries(trackedFiles) {
+  const trackedFilesSet = new Set(trackedFiles);
   const projectRoots = [
-    ...(await listSubdirectories('apps')),
-    ...(await listSubdirectories('packages')),
+    ...listSubdirectories('apps', trackedFiles),
+    ...listSubdirectories('packages', trackedFiles),
   ];
 
   const keyCandidates = [
@@ -158,12 +169,12 @@ async function collectProjectEntries() {
 
   for (const projectRoot of projectRoots.sort(compareLex)) {
     const found = [];
-    const tsconfigs = await findTsconfigFiles(projectRoot);
+    const tsconfigs = findTsconfigFiles(projectRoot, trackedFiles);
     found.push(...tsconfigs);
 
     for (const candidate of keyCandidates) {
       const rel = `${projectRoot}/${candidate}`;
-      if (await fileExists(rel)) {
+      if (fileExists(rel, trackedFilesSet)) {
         found.push(rel);
       }
     }
@@ -175,24 +186,18 @@ async function collectProjectEntries() {
   return result;
 }
 
-async function listFilesInDir(relativeDir) {
-  const abs = path.join(repoRoot, relativeDir);
-  try {
-    const entries = await readDirSorted(abs);
-    return entries
-      .filter((entry) => entry.isFile() && !excludedNames.has(entry.name))
-      .map((entry) => `${relativeDir}/${entry.name}`)
-      .sort(compareLex);
-  } catch {
-    return [];
-  }
+function listFilesInDir(relativeDir, trackedFiles) {
+  const prefix = `${relativeDir}/`;
+  return trackedFiles
+    .filter((filePath) => filePath.startsWith(prefix))
+    .filter((filePath) => !filePath.slice(prefix.length).includes('/'))
+    .sort(compareLex);
 }
 
-async function listDockerComposeFiles() {
-  const entries = await readDirSorted(repoRoot);
-  return entries
-    .filter((entry) => entry.isFile() && /^docker-compose.*\.yml$/u.test(entry.name))
-    .map((entry) => entry.name)
+function listDockerComposeFiles(trackedFiles) {
+  return trackedFiles
+    .filter((filePath) => !filePath.includes('/'))
+    .filter((filePath) => /^docker-compose.*\.yml$/u.test(filePath))
     .sort(compareLex);
 }
 
@@ -203,12 +208,12 @@ function renderList(items) {
   return items.map((item) => `- ${item}`);
 }
 
-async function generateSnapshotMarkdown() {
-  const topLevelTree = await buildTopLevelTree(4);
-  const projects = await collectProjectEntries();
-  const workflows = await listFilesInDir('.github/workflows');
-  const dockerComposeFiles = await listDockerComposeFiles();
-  const docsFiles = await listFilesInDir('docs');
+function generateSnapshotMarkdown(trackedFiles) {
+  const topLevelTree = buildTopLevelTree(trackedFiles, 4);
+  const projects = collectProjectEntries(trackedFiles);
+  const workflows = listFilesInDir('.github/workflows', trackedFiles);
+  const dockerComposeFiles = listDockerComposeFiles(trackedFiles);
+  const docsFiles = listFilesInDir('docs', trackedFiles);
 
   const lines = [
     '# Repository Snapshot',
@@ -256,10 +261,10 @@ async function main() {
   await fs.mkdir(snapshotsDir, { recursive: true });
   await fs.mkdir(path.join(repoRoot, 'ops', 'tools'), { recursive: true });
 
-  const files = (await walkFiles(repoRoot)).sort(compareLex);
+  const files = await getTrackedFiles();
   await fs.writeFile(fileIndexPath, `${JSON.stringify(files, null, 2)}\n`, 'utf8');
 
-  const markdown = await generateSnapshotMarkdown();
+  const markdown = generateSnapshotMarkdown(files);
   await fs.writeFile(repoSnapshotPath, markdown, 'utf8');
 }
 

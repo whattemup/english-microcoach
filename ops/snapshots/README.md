@@ -6,6 +6,8 @@ Regenerate repository snapshot artifacts with:
 node ops/tools/generate_repo_snapshot.mjs
 ```
 
+Snapshots are derived from `git ls-files` to avoid local/untracked artifacts.
+
 ## Determinism Check
 
 After regenerating, verify the snapshot output is stable:
