@@ -52,17 +52,18 @@ const corsOptions: CorsOptionsDelegate<Request> = (req, callback) => {
 
   // Server-to-server/curl requests typically have no Origin header.
   if (!requestOrigin) {
-    return callback(null, { origin: true, credentials: true });
+    return callback(null, { origin: false });
   }
 
   if (config.corsOrigins.length === 0) {
-    return callback(null, { origin: false, credentials: true });
+    return callback(null, { origin: false });
   }
 
-  return callback(null, {
-    origin: config.corsOrigins.includes(requestOrigin),
-    credentials: true
-  });
+  if (config.corsOrigins.includes(requestOrigin)) {
+    return callback(null, { origin: requestOrigin, credentials: true });
+  }
+
+  return callback(null, { origin: false });
 };
 
 app.use(cors(corsOptions));
