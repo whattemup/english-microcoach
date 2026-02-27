@@ -204,7 +204,6 @@ function renderList(items) {
 }
 
 async function generateSnapshotMarkdown() {
-  const generatedAt = new Date().toISOString();
   const topLevelTree = await buildTopLevelTree(4);
   const projects = await collectProjectEntries();
   const workflows = await listFilesInDir('.github/workflows');
@@ -213,8 +212,6 @@ async function generateSnapshotMarkdown() {
 
   const lines = [
     '# Repository Snapshot',
-    '',
-    `Generated at: ${generatedAt}`,
     '',
     '## Top-level tree (depth 4)',
     '',
