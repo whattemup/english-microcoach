@@ -63,7 +63,7 @@ const createRedisStore = async (): Promise<unknown | undefined> => {
 // Avoids memory-store resets on restarts and works across multiple API replicas.
 store = await createRedisStore();
 
-export const apiRateLimit = rateLimit({
+const limiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
   max: config.rateLimitMax,
   standardHeaders: true,
@@ -77,3 +77,33 @@ export const apiRateLimit = rateLimit({
   },
   message: { message: 'Demasiadas solicitudes. Intenta de nuevo en unos minutos.' }
 });
+
+let runtimeFailOpenWarningLogged = false;
+
+const logRuntimeFailOpenWarning = (reason: unknown) => {
+  if (runtimeFailOpenWarningLogged) return;
+  runtimeFailOpenWarningLogged = true;
+  console.warn('[rate-limit] Runtime limiter failure; allowing request without rate limiting.', reason);
+};
+
+export const apiRateLimit = (req: Parameters<typeof limiter>[0], res: Parameters<typeof limiter>[1], next: Parameters<typeof limiter>[2]) => {
+  try {
+    const maybePromise = (limiter as unknown as (...args: unknown[]) => unknown)(req, res, (err?: unknown) => {
+      if (err) {
+        logRuntimeFailOpenWarning(err);
+        return next();
+      }
+      return next();
+    });
+
+    if (typeof (maybePromise as Promise<unknown> | undefined)?.catch === 'function') {
+      (maybePromise as Promise<unknown>).catch((error) => {
+        logRuntimeFailOpenWarning(error);
+        next();
+      });
+    }
+  } catch (error) {
+    logRuntimeFailOpenWarning(error);
+    next();
+  }
+};
