@@ -27,9 +27,9 @@ services:
       # Set these in your production environment / secret manager.
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      MOCK_STT: "false"
-      MOCK_TTS: "false"
-      MOCK_LLM: "false"
+      MOCK_STT: ${MOCK_STT:-"true"}
+      MOCK_TTS: ${MOCK_TTS:-"true"}
+      MOCK_LLM: ${MOCK_LLM:-"true"}
       UPLOAD_DIR: /data/uploads
       LOG_LEVEL: info
     ports:

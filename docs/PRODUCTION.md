@@ -28,6 +28,16 @@ JWT_REFRESH_SECRET=use_a_long_random_secret
 docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 ```
 
+By default, `MOCK_STT`, `MOCK_TTS`, and `MOCK_LLM` are `true` unless you set them in server `.env`.
+
+If your real providers are configured, set mocks off explicitly:
+
+```bash
+MOCK_STT=false
+MOCK_TTS=false
+MOCK_LLM=false
+```
+
 3) Verify:
 
 ```bash
