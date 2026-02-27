@@ -8,6 +8,7 @@
     "build": "expo export"
   },
   "dependencies": {
+    "@babel/runtime": "^7.26.0",
     "@emc/shared": "workspace:*",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.11.0",
