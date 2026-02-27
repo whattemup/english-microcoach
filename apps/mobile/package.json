@@ -2,7 +2,7 @@
   "name": "@emc/mobile",
   "version": "1.0.0",
   "private": true,
-  "main": "expo/AppEntry",
+  "main": "index.js",
   "scripts": {
     "dev": "expo start",
     "build": "expo export"
