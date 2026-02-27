@@ -23,6 +23,14 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Verify repo snapshots are up to date
+        run: |
+          node ops/tools/generate_repo_snapshot.mjs
+          if ! git diff --exit-code -- ops/snapshots; then
+            echo "Snapshot artifacts out of date. Run: node ops/tools/generate_repo_snapshot.mjs and commit ops/snapshots/*"
+            exit 1
+          fi
+
       - name: Typecheck + build
         run: pnpm -r build
 
