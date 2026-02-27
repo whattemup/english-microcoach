@@ -1,9 +1,19 @@
 import { config } from '../config.js';
+import { createNotConfiguredSttProvider } from '../providers/notConfigured.js';
+import { STTProvider } from '../providers/types.js';
 
 export interface SttResult {
   transcript: string;
   confidence: number;
 }
+
+const resolveSttProvider = (): STTProvider => {
+  switch (config.sttProvider) {
+    case 'not_configured':
+    default:
+      return createNotConfiguredSttProvider();
+  }
+};
 
 export const transcribeAudio = async (_filePath: string, expectedText?: string): Promise<SttResult> => {
   if (config.mockStt) {
@@ -12,5 +22,11 @@ export const transcribeAudio = async (_filePath: string, expectedText?: string):
       confidence: 0.93
     };
   }
-  throw new Error('STT real no configurado. Activa MOCK_STT=true o integra un proveedor externo.');
+
+  const provider = resolveSttProvider();
+  const result = await provider.transcribeAudio(_filePath);
+  return {
+    transcript: result.text,
+    confidence: 0
+  };
 };

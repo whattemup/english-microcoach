@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { config } from '../config.js';
+import { ProviderNotConfiguredError } from '../providers/types.js';
 
 const isRecordNotFound = (e: unknown): boolean =>
   e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025';
@@ -37,6 +38,16 @@ export const errorHandler = (err: unknown, req: Request, res: Response, _next: N
       return;
     }
     res.status(400).json({ message: 'Error de base de datos' });
+    return;
+  }
+
+
+  if (err instanceof ProviderNotConfiguredError) {
+    res.status(501).json({
+      error: 'provider_not_configured',
+      providerType: err.providerType,
+      hint: err.hint
+    });
     return;
   }
 
