@@ -65,6 +65,6 @@ For Expo/React Native, use EAS Build + EAS Update.
 
 - Put API behind a reverse proxy (Caddy/Nginx) with HTTPS.
 - Set `TRUST_PROXY=true` when behind a proxy.
-- Set `CORS_ORIGINS` to your production domains.
+- In production, set `CORS_ORIGINS` explicitly; empty means no cross-origin access.
 - Use a real STT/TTS/LLM provider (`MOCK_* = false`) and secure API keys via secret manager.
 - Use a managed Postgres (recommended) for backups and upgrades.
