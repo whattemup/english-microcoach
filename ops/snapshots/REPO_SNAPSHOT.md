@@ -1,6 +1,6 @@
 # Repository Snapshot
 
-Generated at: 2026-02-27T10:47:47.410Z
+Generated at: 2026-02-27T16:18:39.673Z
 
 ## Top-level tree (depth 4)
 
@@ -13,7 +13,10 @@ Generated at: 2026-02-27T10:47:47.410Z
   - .gitignore
   - apps/
     - apps/api/
+      - apps/api/.env
       - apps/api/.env.example
+      - apps/api/apps/
+        - apps/api/apps/api/
       - apps/api/Dockerfile
       - apps/api/package.json
       - apps/api/prisma/
@@ -36,6 +39,7 @@ Generated at: 2026-02-27T10:47:47.410Z
         - apps/api/tests/scoring.test.ts
       - apps/api/tsconfig.json
     - apps/mobile/
+      - apps/mobile/.env
       - apps/mobile/.env.example
       - apps/mobile/app.json
       - apps/mobile/App.tsx
@@ -66,6 +70,7 @@ Generated at: 2026-02-27T10:47:47.410Z
     - ops/snapshots/
       - ops/snapshots/FILE_INDEX.json
       - ops/snapshots/README.md
+      - ops/snapshots/REPO_SNAPSHOT.md
     - ops/tools/
       - ops/tools/generate_repo_snapshot.mjs
   - package.json
