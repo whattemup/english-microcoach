@@ -1,6 +1,6 @@
 # Repository Snapshot
 
-Generated at: 2026-02-27T16:28:32.952Z
+Generated at: 2026-02-27T16:25:23.263Z
 
 ## Top-level tree (depth 4)
 
@@ -14,8 +14,6 @@ Generated at: 2026-02-27T16:28:32.952Z
   - apps/
     - apps/api/
       - apps/api/.env.example
-      - apps/api/apps/
-        - apps/api/apps/api/
       - apps/api/Dockerfile
       - apps/api/package.json
       - apps/api/prisma/
