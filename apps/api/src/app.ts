@@ -1,6 +1,6 @@
-import express, { type Express } from 'express';
+import express, { type Express, type Request } from 'express';
 import path from 'node:path';
-import cors from 'cors';
+import cors, { type CorsOptionsDelegate } from 'cors';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import compression from 'compression';
@@ -43,12 +43,30 @@ app.use(
   })
 );
 
-app.use(
-  cors({
-    origin: config.corsOrigins.length ? config.corsOrigins : true,
-    credentials: true
-  })
-);
+const corsOptions: CorsOptionsDelegate<Request> = (req, callback) => {
+  const requestOrigin = req.header('Origin');
+
+  // Server-to-server/curl requests typically have no Origin header.
+  if (!requestOrigin) {
+    return callback(null, { origin: true, credentials: true });
+  }
+
+  if (config.corsOrigins.length > 0) {
+    return callback(null, {
+      origin: config.corsOrigins.includes(requestOrigin),
+      credentials: true
+    });
+  }
+
+  if (!config.isProd) {
+    return callback(null, { origin: true, credentials: true });
+  }
+
+  const sameOrigin = requestOrigin === `${req.protocol}://${req.get('host')}`;
+  return callback(null, { origin: sameOrigin, credentials: true });
+};
+
+app.use(cors(corsOptions));
 
 app.use(apiRateLimit);
 app.use(compression());
