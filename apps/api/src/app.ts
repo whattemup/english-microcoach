@@ -75,14 +75,72 @@ app.use('/uploads', express.static(uploadsAbsolute, { maxAge: config.isProd ? '7
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
-// Readiness: verifies DB connectivity (for orchestration / load balancers).
+const REDIS_READY_TIMEOUT_MS = 1000;
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('Redis readiness timed out')), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
+const checkRedisReady = async (): Promise<boolean> => {
+  if (!config.redisUrl) return true;
+
+  const mod = await import('ioredis');
+  const Redis = (mod as any).default ?? (mod as any);
+  const client = new Redis(config.redisUrl, {
+    lazyConnect: true,
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 1
+  });
+
+  client.on('error', () => {
+    // Swallow to avoid unhandled error events during readiness probes.
+  });
+
+  try {
+    await withTimeout(client.connect(), REDIS_READY_TIMEOUT_MS);
+    const pong = await withTimeout(client.ping(), REDIS_READY_TIMEOUT_MS);
+    return pong === 'PONG';
+  } catch {
+    return false;
+  } finally {
+    client.disconnect();
+  }
+};
+
+// Readiness: verifies dependencies (for orchestration / load balancers).
 app.get('/ready', async (_req, res) => {
+  const status = {
+    database: false,
+    redis: config.redisUrl ? false : true
+  };
+
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ ok: true });
+    status.database = true;
   } catch {
-    res.status(503).json({ ok: false });
+    status.database = false;
   }
+
+  if (config.redisUrl) {
+    status.redis = await checkRedisReady();
+  }
+
+  const ready = status.database && status.redis;
+  if (!ready) {
+    return res.status(503).json({ ok: false, ready, status });
+  }
+
+  return res.json({ ok: true, ready, status });
 });
 app.use('/auth', authRoutes);
 
