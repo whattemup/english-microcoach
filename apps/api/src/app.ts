@@ -46,24 +46,23 @@ app.use(
 const corsOptions: CorsOptionsDelegate<Request> = (req, callback) => {
   const requestOrigin = req.header('Origin');
 
+  if (!config.isProd) {
+    return callback(null, { origin: true, credentials: true });
+  }
+
   // Server-to-server/curl requests typically have no Origin header.
   if (!requestOrigin) {
     return callback(null, { origin: true, credentials: true });
   }
 
-  if (config.corsOrigins.length > 0) {
-    return callback(null, {
-      origin: config.corsOrigins.includes(requestOrigin),
-      credentials: true
-    });
+  if (config.corsOrigins.length === 0) {
+    return callback(null, { origin: false, credentials: true });
   }
 
-  if (!config.isProd) {
-    return callback(null, { origin: true, credentials: true });
-  }
-
-  const sameOrigin = requestOrigin === `${req.protocol}://${req.get('host')}`;
-  return callback(null, { origin: sameOrigin, credentials: true });
+  return callback(null, {
+    origin: config.corsOrigins.includes(requestOrigin),
+    credentials: true
+  });
 };
 
 app.use(cors(corsOptions));
