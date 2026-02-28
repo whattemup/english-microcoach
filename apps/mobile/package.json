@@ -45,7 +45,8 @@
     "whatwg-url-without-unicode": "^8.0.0-3",
     "expo-constants": "~16.0.2",
     "scheduler": "0.24.0-canary-efb381bbf-20230505",
-    "expo-file-system": "~17.0.1"
+    "expo-file-system": "~17.0.1",
+    "react-freeze": "^1.0.4"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
