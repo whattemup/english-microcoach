@@ -12,6 +12,9 @@ export const register = (name: string, email: string, password: string) => apiRe
 
 export const getCategories = (token: string) => apiRequest<Array<{ id: number; name: string; description: string }>>('/categories', {}, token);
 export const getLessons = (token: string, categoryId: number) => apiRequest<Array<{ id: number; title: string; level: string }>>(`/lessons?categoryId=${categoryId}`, {}, token);
+
+export const getProgress = (token: string) =>
+  apiRequest<{ unlockedLevels: string[]; attemptsCount: number; avgScoreRecent: number }>('/progress', {}, token);
 export const getLesson = (token: string, lessonId: number) =>
   apiRequest<{
     id: number;
