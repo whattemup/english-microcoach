@@ -1,4 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+// Use default import to support ESM/CJS interop when running seed via tsx on Node 22.
+import prismaPkg from '@prisma/client';
+
+const { PrismaClient } = prismaPkg as { PrismaClient: new () => import('@prisma/client').PrismaClient };
 
 const prisma = new PrismaClient();
 
