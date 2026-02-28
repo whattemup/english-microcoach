@@ -29,14 +29,14 @@ pnpm --filter @emc/mobile dev
 
 Seed content lives in `apps/api/prisma/seed.ts` under `lessonsByCategory`.
 
-1. Pick one of the existing categories (`Conversación`, `Trabajo`, `Vida diaria`) or add a new entry to both `categoryData` and `lessonsByCategory`.
-2. Add a lesson object with:
-   - `title` (human-readable lesson name)
+1. Keep the 3 existing categories exactly as-is (`Conversación`, `Trabajo`, `Vida diaria`).
+2. Inside one category, add or edit lesson objects with:
+   - `title` (stored in `Lesson.title`)
    - `level` (`A1`, `A2`, or `B1`)
    - `phrases` with exactly two entries:
      - first phrase is learner output (seeded with `order: 0`)
-     - second phrase is realistic response/follow-up (seeded with `order: 1`)
-3. Keep `tags` as an array of lowercase strings (kebab-case recommended).
+     - second phrase is realistic response line (seeded with `order: 1`)
+3. For each phrase, provide `expected`, `translation`, and `tags` (`string[]`).
 4. Regenerate DB data so your new content is applied:
 
 ```bash
