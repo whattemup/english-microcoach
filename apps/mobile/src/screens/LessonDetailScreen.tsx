@@ -64,28 +64,25 @@ export const LessonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const canRecord = hasPhrase;
 
   const handleSpeak = async () => {
-    console.log('[TTS] handleSpeak called');
+    Alert.alert('TTS', 'Botón presionado');
+    console.log('[TTS] pressed');
+    console.log('[TTS] phrase.expected:', JSON.stringify(phrase?.expected));
+
+    const voices = await Speech.getAvailableVoicesAsync().catch(() => []);
+    console.log('[TTS] voices count:', voices.length);
+    console.log(
+      '[TTS] first voices:',
+      voices.slice(0, 3).map((voice: { language?: string; name?: string }) => ({
+        language: voice.language,
+        name: voice.name
+      }))
+    );
+
     const textToSpeak = phrase?.expected?.trim();
-    console.log('[TTS] textToSpeak:', JSON.stringify(textToSpeak));
 
     if (!textToSpeak) {
       Alert.alert('Error', 'No hay frase para reproducir.');
       return;
-    }
-
-    try {
-      const voices = await Speech.getAvailableVoicesAsync();
-      console.log('[TTS] voice count:', voices.length);
-      console.log(
-        '[TTS] first voices:',
-        voices.slice(0, 3).map((voice: { language?: string; name?: string; quality?: string }) => ({
-          language: voice.language,
-          name: voice.name,
-          quality: voice.quality
-        }))
-      );
-    } catch (error) {
-      console.error('[TTS] getAvailableVoicesAsync failed', error);
     }
 
     try {
