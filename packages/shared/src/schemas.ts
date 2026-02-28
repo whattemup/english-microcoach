@@ -26,8 +26,17 @@ export const lessonPhraseSchema = z.object({
 
 export const attemptSchema = z.object({
   phraseId: z.coerce.number().int().positive(),
-  expectedText: z.string().min(1, 'Texto esperado requerido')
-});
+  expectedText: z.string().min(1, 'Texto esperado requerido').optional(),
+  expected: z.string().min(1, 'Texto esperado requerido').optional()
+})
+  .refine((data) => !!data.expectedText || !!data.expected, {
+    message: 'Texto esperado requerido',
+    path: ['expectedText']
+  })
+  .transform(({ phraseId, expectedText, expected }) => ({
+    phraseId,
+    expectedText: expectedText ?? expected!
+  }));
 
 export const roleplaySchema = z.object({
   context: z.string().min(1, 'Contexto requerido')
