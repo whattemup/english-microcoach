@@ -26,3 +26,6 @@ pnpm --filter @emc/api test
 - Local default is mock providers (`MOCK_STT/TTS/LLM=true`).
 - If any mock flag is `false`, matching `*_PROVIDER` must be configured and implemented.
 - Probes: `/health` (liveness), `/ready` (DB + optional Redis readiness).
+- If local Prisma migrations change, reset the local Postgres volume before reapplying:
+  - `docker compose -f docker-compose.local.yml down -v`
+  - `docker compose -f docker-compose.local.yml up -d`
