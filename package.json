@@ -6,5 +6,11 @@
     "dev": "pnpm -r --parallel --filter @emc/api --filter @emc/mobile dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test"
+  },
+  "pnpm": {
+    "publicHoistPattern": [
+      "*"
+    ],
+    "nodeLinker": "hoisted"
   }
 }
