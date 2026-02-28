@@ -17,50 +17,50 @@ const categoryData = [
 const lessonsByCategory: Record<string, SeedLesson[]> = {
   Conversación: [
     {
-      title: 'Saludar y presentarse',
+      title: 'Presentarte con confianza',
       level: 'A1',
       phrases: [
         {
-          expected: "Hi, I'm Ana. Nice to meet you.",
-          translation: 'Hola, soy Ana. Mucho gusto.',
-          tags: ['greetings', 'introductions']
+          expected: 'Hi, I’m Fernando. Nice to meet you.',
+          translation: 'Hola, soy Fernando. Mucho gusto.',
+          tags: ['greeting', 'introductions']
         },
         {
-          expected: 'Nice to meet you too. How are you today?',
-          translation: 'Mucho gusto también. ¿Cómo estás hoy?',
-          tags: ['greetings', 'small-talk']
+          expected: 'Nice to meet you too. Where are you from?',
+          translation: 'Mucho gusto también. ¿De dónde eres?',
+          tags: ['greeting', 'introductions']
         }
       ]
     },
     {
-      title: 'Conversación casual',
+      title: 'Romper el hielo',
       level: 'A1',
       phrases: [
         {
-          expected: "It's a beautiful day, isn't it?",
-          translation: 'Hace un día hermoso, ¿verdad?',
-          tags: ['small-talk', 'weather']
+          expected: 'How’s your day going?',
+          translation: '¿Cómo va tu día?',
+          tags: ['small-talk', 'daily']
         },
         {
-          expected: 'Yes, perfect for a walk after work.',
-          translation: 'Sí, perfecto para caminar después del trabajo.',
-          tags: ['small-talk', 'daily-life']
+          expected: 'It’s going well, thanks. How about yours?',
+          translation: 'Va bien, gracias. ¿Y el tuyo?',
+          tags: ['small-talk', 'daily']
         }
       ]
     },
     {
-      title: 'Pedir ayuda básica',
+      title: 'Pedir repetición',
       level: 'A1',
       phrases: [
         {
-          expected: 'Excuse me, can you help me for a minute?',
-          translation: 'Disculpa, ¿me puedes ayudar un minuto?',
-          tags: ['asking-for-help', 'politeness']
+          expected: 'Sorry, could you say that again?',
+          translation: 'Perdón, ¿puedes repetir eso?',
+          tags: ['clarifying', 'listening']
         },
         {
-          expected: "Of course. What do you need?",
-          translation: 'Claro. ¿Qué necesitas?',
-          tags: ['asking-for-help', 'responses']
+          expected: 'Of course. Let me say it more slowly.',
+          translation: 'Claro. Déjame decirlo más despacio.',
+          tags: ['clarifying', 'listening']
         }
       ]
     },
@@ -69,160 +69,144 @@ const lessonsByCategory: Record<string, SeedLesson[]> = {
       level: 'A2',
       phrases: [
         {
-          expected: 'Do you want to grab coffee this afternoon?',
-          translation: '¿Quieres tomar un café esta tarde?',
-          tags: ['making-plans', 'social']
+          expected: 'Are you free this weekend?',
+          translation: '¿Estás libre este fin de semana?',
+          tags: ['planning', 'weekend']
         },
         {
-          expected: "Sure, let's meet at four near the station.",
-          translation: 'Claro, nos vemos a las cuatro cerca de la estación.',
-          tags: ['making-plans', 'time']
+          expected: 'Yes, what did you have in mind?',
+          translation: 'Sí, ¿qué tienes en mente?',
+          tags: ['planning', 'weekend']
         }
       ]
     },
     {
-      title: 'Pedir disculpas',
+      title: 'Invitar a alguien',
       level: 'A2',
       phrases: [
         {
-          expected: "I'm sorry I'm late. The bus was delayed.",
-          translation: 'Perdón por llegar tarde. El bus se retrasó.',
-          tags: ['apologizing', 'transportation']
+          expected: 'Would you like to grab coffee later?',
+          translation: '¿Te gustaría tomar un café más tarde?',
+          tags: ['inviting', 'social']
         },
         {
-          expected: "No problem, thanks for letting me know.",
-          translation: 'No pasa nada, gracias por avisarme.',
-          tags: ['apologizing', 'politeness']
+          expected: 'Sure, that sounds great. What time?',
+          translation: 'Claro, suena bien. ¿A qué hora?',
+          tags: ['inviting', 'social']
         }
       ]
     },
     {
-      title: 'Agradecer con naturalidad',
+      title: 'Dar tu opinión',
       level: 'A2',
       phrases: [
         {
-          expected: 'Thanks a lot for your help today.',
-          translation: 'Muchas gracias por tu ayuda hoy.',
-          tags: ['thanking', 'politeness']
+          expected: 'I think that’s a good idea.',
+          translation: 'Creo que es una buena idea.',
+          tags: ['opinions', 'agreement']
         },
         {
-          expected: "You're welcome. I'm happy to help.",
-          translation: 'De nada. Me da gusto ayudar.',
-          tags: ['thanking', 'responses']
+          expected: 'I agree. Let’s try it.',
+          translation: 'Estoy de acuerdo. Intentémoslo.',
+          tags: ['opinions', 'agreement']
         }
       ]
     },
     {
-      title: 'Pedir en un restaurante',
-      level: 'A2',
+      title: 'Desacuerdo educado',
+      level: 'B1',
       phrases: [
         {
-          expected: "I'd like the chicken sandwich, please.",
-          translation: 'Quisiera el sándwich de pollo, por favor.',
-          tags: ['ordering-food', 'restaurant']
+          expected: 'I’m not sure I agree with that.',
+          translation: 'No estoy seguro de estar de acuerdo con eso.',
+          tags: ['opinions', 'disagreement']
         },
         {
-          expected: 'Great choice. Would you like fries with that?',
-          translation: 'Buena elección. ¿Quieres papas con eso?',
-          tags: ['ordering-food', 'follow-up']
+          expected: 'That’s fair. What would you suggest instead?',
+          translation: 'Es válido. ¿Qué sugerirías en su lugar?',
+          tags: ['opinions', 'disagreement']
+        }
+      ]
+    },
+    {
+      title: 'Pedir ayuda',
+      level: 'A1',
+      phrases: [
+        {
+          expected: 'Can you help me for a moment?',
+          translation: '¿Puedes ayudarme un momento?',
+          tags: ['help', 'polite']
+        },
+        {
+          expected: 'Of course. What do you need?',
+          translation: 'Claro. ¿Qué necesitas?',
+          tags: ['help', 'polite']
         }
       ]
     },
     {
       title: 'Pedir direcciones',
-      level: 'B1',
+      level: 'A2',
       phrases: [
         {
-          expected: 'Could you tell me how to get to the museum?',
-          translation: '¿Podrías decirme cómo llegar al museo?',
-          tags: ['directions', 'asking-for-help']
+          expected: 'Excuse me, how do I get to the station?',
+          translation: 'Disculpa, ¿cómo llego a la estación?',
+          tags: ['directions', 'travel']
         },
         {
-          expected: "Go straight and turn left at the second light.",
-          translation: 'Sigue derecho y gira a la izquierda en el segundo semáforo.',
-          tags: ['directions', 'navigation']
+          expected: 'Go straight and turn left at the corner.',
+          translation: 'Ve derecho y gira a la izquierda en la esquina.',
+          tags: ['directions', 'travel']
         }
       ]
     },
     {
-      title: 'Confirmar si entendiste',
-      level: 'B1',
+      title: 'Cerrar conversación',
+      level: 'A2',
       phrases: [
         {
-          expected: 'So, we meet tomorrow at nine, right?',
-          translation: 'Entonces, nos vemos mañana a las nueve, ¿cierto?',
-          tags: ['checking-understanding', 'confirming']
+          expected: 'It was great talking to you.',
+          translation: 'Fue un gusto hablar contigo.',
+          tags: ['closing', 'polite']
         },
         {
-          expected: "Exactly, and don't forget to bring your ID.",
-          translation: 'Exacto, y no olvides traer tu identificación.',
-          tags: ['checking-understanding', 'details']
-        }
-      ]
-    },
-    {
-      title: 'Presentar a otra persona',
-      level: 'B1',
-      phrases: [
-        {
-          expected: 'This is my colleague Marta. She works with me.',
-          translation: 'Ella es mi colega Marta. Trabaja conmigo.',
-          tags: ['introductions', 'networking']
-        },
-        {
-          expected: "Nice to meet you, Marta. I've heard great things.",
-          translation: 'Mucho gusto, Marta. He escuchado cosas muy buenas.',
-          tags: ['introductions', 'small-talk']
+          expected: 'Likewise. Let’s stay in touch.',
+          translation: 'Igualmente. Mantengámonos en contacto.',
+          tags: ['closing', 'polite']
         }
       ]
     }
   ],
   Trabajo: [
     {
-      title: 'Abrir una reunión',
+      title: 'Programar reunión',
       level: 'A1',
       phrases: [
         {
-          expected: "Good morning, everyone. Let's start the meeting.",
-          translation: 'Buenos días a todos. Empecemos la reunión.',
-          tags: ['meetings', 'opening']
+          expected: 'Can we schedule a meeting for tomorrow?',
+          translation: '¿Podemos agendar una reunión para mañana?',
+          tags: ['scheduling', 'meetings']
         },
         {
-          expected: 'Great, first we will review this week\'s goals.',
-          translation: 'Perfecto, primero revisaremos los objetivos de esta semana.',
-          tags: ['meetings', 'agenda']
+          expected: 'Yes, what time works for you?',
+          translation: 'Sí, ¿qué hora te funciona?',
+          tags: ['scheduling', 'meetings']
         }
       ]
     },
     {
-      title: 'Agendar una llamada',
+      title: 'Confirmar disponibilidad',
       level: 'A1',
       phrases: [
         {
-          expected: 'Can we schedule a call for tomorrow morning?',
-          translation: '¿Podemos agendar una llamada para mañana en la mañana?',
-          tags: ['scheduling', 'calls']
+          expected: 'Are you available at 3 PM?',
+          translation: '¿Estás disponible a las 3 PM?',
+          tags: ['scheduling', 'availability']
         },
         {
-          expected: 'Yes, 10 a.m. works well for me.',
-          translation: 'Sí, las 10 a. m. me funciona bien.',
-          tags: ['scheduling', 'time']
-        }
-      ]
-    },
-    {
-      title: 'Dar actualización de estado',
-      level: 'A2',
-      phrases: [
-        {
-          expected: "I've finished the design and started development.",
-          translation: 'Ya terminé el diseño y empecé el desarrollo.',
-          tags: ['status-updates', 'progress']
-        },
-        {
-          expected: 'Thanks, please share a demo by Friday.',
-          translation: 'Gracias, por favor comparte una demo para el viernes.',
-          tags: ['status-updates', 'next-steps']
+          expected: 'Yes, that works for me.',
+          translation: 'Sí, me funciona.',
+          tags: ['scheduling', 'availability']
         }
       ]
     },
@@ -231,272 +215,288 @@ const lessonsByCategory: Record<string, SeedLesson[]> = {
       level: 'A2',
       phrases: [
         {
-          expected: 'Sorry, could you clarify the last point?',
-          translation: 'Perdón, ¿podrías aclarar el último punto?',
+          expected: 'Could you clarify that point?',
+          translation: '¿Podrías aclarar ese punto?',
           tags: ['clarifying', 'meetings']
         },
         {
-          expected: 'Sure, we need approval before we launch.',
-          translation: 'Claro, necesitamos aprobación antes de lanzar.',
-          tags: ['clarifying', 'project']
+          expected: 'Sure, let me explain it differently.',
+          translation: 'Claro, déjame explicarlo de otra manera.',
+          tags: ['clarifying', 'meetings']
         }
       ]
     },
     {
-      title: 'Escribir un correo breve',
+      title: 'Dar actualización',
       level: 'A2',
       phrases: [
         {
-          expected: 'I\'m writing to confirm our meeting on Monday.',
-          translation: 'Escribo para confirmar nuestra reunión del lunes.',
-          tags: ['emailing', 'confirmation']
+          expected: 'We’re making good progress on the project.',
+          translation: 'Estamos avanzando bien en el proyecto.',
+          tags: ['status', 'updates']
         },
         {
-          expected: "Thanks for confirming. I'll send the invite now.",
-          translation: 'Gracias por confirmar. Envío la invitación ahora.',
-          tags: ['emailing', 'follow-up']
+          expected: 'That’s great to hear. What’s next?',
+          translation: 'Qué bueno escuchar eso. ¿Qué sigue?',
+          tags: ['status', 'updates']
         }
       ]
     },
     {
-      title: 'Hablar de fechas límite',
-      level: 'B1',
-      phrases: [
-        {
-          expected: 'The deadline is tight, but we can make it.',
-          translation: 'La fecha límite es ajustada, pero podemos lograrla.',
-          tags: ['deadlines', 'planning']
-        },
-        {
-          expected: 'Okay, let\'s prioritize the critical tasks first.',
-          translation: 'Bien, prioricemos primero las tareas críticas.',
-          tags: ['deadlines', 'priorities']
-        }
-      ]
-    },
-    {
-      title: 'Reportar un bloqueo',
-      level: 'B1',
-      phrases: [
-        {
-          expected: "I'm blocked because we still need client feedback.",
-          translation: 'Estoy bloqueado porque aún necesitamos feedback del cliente.',
-          tags: ['blockers', 'status-updates']
-        },
-        {
-          expected: "Understood. I'll contact them this afternoon.",
-          translation: 'Entendido. Los contactaré esta tarde.',
-          tags: ['blockers', 'next-steps']
-        }
-      ]
-    },
-    {
-      title: 'Hacer una petición amable',
+      title: 'Reportar problema',
       level: 'A2',
       phrases: [
         {
-          expected: 'Could you review this document when you have time?',
-          translation: '¿Podrías revisar este documento cuando tengas tiempo?',
-          tags: ['polite-requests', 'review']
+          expected: 'We’re facing a small delay.',
+          translation: 'Estamos enfrentando un pequeño retraso.',
+          tags: ['blockers', 'status']
         },
         {
-          expected: "Of course, I'll send comments before lunch.",
-          translation: 'Claro, enviaré comentarios antes del almuerzo.',
-          tags: ['polite-requests', 'commitments']
+          expected: 'What’s causing it?',
+          translation: '¿Qué lo está causando?',
+          tags: ['blockers', 'status']
         }
       ]
     },
     {
-      title: 'Dar seguimiento',
+      title: 'Pedir plazo extra',
       level: 'B1',
       phrases: [
         {
-          expected: 'Just following up on the proposal I sent yesterday.',
-          translation: 'Solo doy seguimiento a la propuesta que envié ayer.',
-          tags: ['follow-ups', 'emailing']
+          expected: 'Could we extend the deadline by two days?',
+          translation: '¿Podríamos extender la fecha límite dos días?',
+          tags: ['deadlines', 'negotiation']
         },
         {
-          expected: "Thanks for the reminder. We'll reply today.",
-          translation: 'Gracias por el recordatorio. Responderemos hoy.',
-          tags: ['follow-ups', 'responses']
+          expected: 'That might be possible. Let me check.',
+          translation: 'Puede ser posible. Déjame revisar.',
+          tags: ['deadlines', 'negotiation']
         }
       ]
     },
     {
-      title: 'Reportar progreso semanal',
+      title: 'Dar retroalimentación',
       level: 'B1',
       phrases: [
         {
-          expected: 'This week we completed three key features.',
-          translation: 'Esta semana completamos tres funciones clave.',
-          tags: ['reporting-progress', 'status-updates']
+          expected: 'I’d suggest improving the introduction.',
+          translation: 'Sugeriría mejorar la introducción.',
+          tags: ['feedback', 'writing']
         },
         {
-          expected: 'Excellent progress. Keep the same pace next week.',
-          translation: 'Excelente avance. Mantengan el mismo ritmo la próxima semana.',
-          tags: ['reporting-progress', 'feedback']
+          expected: 'Thanks for the feedback. I’ll revise it.',
+          translation: 'Gracias por la retroalimentación. Lo revisaré.',
+          tags: ['feedback', 'writing']
+        }
+      ]
+    },
+    {
+      title: 'Hacer seguimiento',
+      level: 'A2',
+      phrases: [
+        {
+          expected: 'Just following up on my previous email.',
+          translation: 'Solo dando seguimiento a mi correo anterior.',
+          tags: ['email', 'follow-up']
+        },
+        {
+          expected: 'Thanks for the reminder. I’ll respond today.',
+          translation: 'Gracias por el recordatorio. Responderé hoy.',
+          tags: ['email', 'follow-up']
+        }
+      ]
+    },
+    {
+      title: 'Confirmar entrega',
+      level: 'A1',
+      phrases: [
+        {
+          expected: 'I’ve sent the document.',
+          translation: 'Ya envié el documento.',
+          tags: ['delivery', 'documents']
+        },
+        {
+          expected: 'Got it. I’ll review it shortly.',
+          translation: 'Recibido. Lo revisaré pronto.',
+          tags: ['delivery', 'documents']
+        }
+      ]
+    },
+    {
+      title: 'Cerrar reunión',
+      level: 'A2',
+      phrases: [
+        {
+          expected: 'Let’s summarize the next steps.',
+          translation: 'Resumamos los siguientes pasos.',
+          tags: ['meetings', 'closing']
+        },
+        {
+          expected: 'Perfect. I’ll send the action items.',
+          translation: 'Perfecto. Enviaré los puntos de acción.',
+          tags: ['meetings', 'closing']
         }
       ]
     }
   ],
   'Vida diaria': [
     {
-      title: 'Comprar en una tienda',
+      title: 'Pedir en restaurante',
       level: 'A1',
       phrases: [
         {
-          expected: 'How much is this T-shirt?',
-          translation: '¿Cuánto cuesta esta camiseta?',
-          tags: ['shopping', 'prices']
+          expected: 'I’d like a chicken sandwich, please.',
+          translation: 'Me gustaría un sándwich de pollo, por favor.',
+          tags: ['restaurant', 'ordering']
         },
         {
-          expected: "It's twenty dollars, and it's on sale today.",
-          translation: 'Cuesta veinte dólares y hoy está en oferta.',
-          tags: ['shopping', 'offers']
+          expected: 'Would you like fries with that?',
+          translation: '¿Le gustaría papas con eso?',
+          tags: ['restaurant', 'ordering']
         }
       ]
     },
     {
-      title: 'Pedir una cita',
+      title: 'Pagar cuenta',
+      level: 'A1',
+      phrases: [
+        {
+          expected: 'Can I have the bill, please?',
+          translation: '¿Me puede traer la cuenta, por favor?',
+          tags: ['restaurant', 'payment']
+        },
+        {
+          expected: 'Of course. I’ll bring it right away.',
+          translation: 'Claro. Se la traigo enseguida.',
+          tags: ['restaurant', 'payment']
+        }
+      ]
+    },
+    {
+      title: 'En hotel',
+      level: 'A1',
+      phrases: [
+        {
+          expected: 'I have a reservation under Garcia.',
+          translation: 'Tengo una reservación a nombre de García.',
+          tags: ['hotel', 'check-in']
+        },
+        {
+          expected: 'Welcome. May I see your ID?',
+          translation: 'Bienvenido. ¿Puedo ver su identificación?',
+          tags: ['hotel', 'check-in']
+        }
+      ]
+    },
+    {
+      title: 'Transporte',
       level: 'A2',
       phrases: [
         {
-          expected: "I'd like to make a dentist appointment.",
-          translation: 'Me gustaría agendar una cita con el dentista.',
-          tags: ['appointments', 'health']
+          expected: 'How long does it take to get there?',
+          translation: '¿Cuánto tiempo se tarda en llegar?',
+          tags: ['transport', 'time']
         },
         {
-          expected: 'Sure, we have an opening on Thursday at 3 p.m.',
-          translation: 'Claro, tenemos un espacio el jueves a las 3 p. m.',
+          expected: 'About twenty minutes by bus.',
+          translation: 'Aproximadamente veinte minutos en autobús.',
+          tags: ['transport', 'time']
+        }
+      ]
+    },
+    {
+      title: 'Compras',
+      level: 'A1',
+      phrases: [
+        {
+          expected: 'Do you have this in a different size?',
+          translation: '¿Tiene esto en otra talla?',
+          tags: ['shopping', 'sizes']
+        },
+        {
+          expected: 'Let me check in the back.',
+          translation: 'Déjeme revisar en la parte de atrás.',
+          tags: ['shopping', 'sizes']
+        }
+      ]
+    },
+    {
+      title: 'Hacer cita',
+      level: 'A2',
+      phrases: [
+        {
+          expected: 'I’d like to make an appointment.',
+          translation: 'Me gustaría hacer una cita.',
+          tags: ['appointments', 'scheduling']
+        },
+        {
+          expected: 'Sure. What day works for you?',
+          translation: 'Claro. ¿Qué día le funciona?',
           tags: ['appointments', 'scheduling']
         }
       ]
     },
     {
-      title: 'Moverse en transporte público',
+      title: 'Preferencia',
       level: 'A2',
       phrases: [
         {
-          expected: 'Does this bus go to the city center?',
-          translation: '¿Este bus va al centro de la ciudad?',
-          tags: ['transportation', 'directions']
+          expected: 'I prefer something less spicy.',
+          translation: 'Prefiero algo menos picante.',
+          tags: ['preferences', 'food']
         },
         {
-          expected: 'Yes, but you need to get off at the next stop.',
-          translation: 'Sí, pero debes bajarte en la siguiente parada.',
-          tags: ['transportation', 'instructions']
+          expected: 'No problem. I’ll recommend this one.',
+          translation: 'No hay problema. Le recomiendo este.',
+          tags: ['preferences', 'food']
         }
       ]
     },
     {
-      title: 'Check-in en hotel',
-      level: 'A1',
-      phrases: [
-        {
-          expected: 'Hi, I have a reservation under Lopez.',
-          translation: 'Hola, tengo una reserva a nombre de Lopez.',
-          tags: ['hotel', 'check-in']
-        },
-        {
-          expected: 'Welcome, Mr. Lopez. May I see your passport?',
-          translation: 'Bienvenido, señor Lopez. ¿Puedo ver su pasaporte?',
-          tags: ['hotel', 'front-desk']
-        }
-      ]
-    },
-    {
-      title: 'Pedir la cuenta en restaurante',
-      level: 'A1',
-      phrases: [
-        {
-          expected: 'Could we have the bill, please?',
-          translation: '¿Nos trae la cuenta, por favor?',
-          tags: ['restaurant', 'payments']
-        },
-        {
-          expected: 'Of course. Would you like to pay by card or cash?',
-          translation: 'Claro. ¿Quieren pagar con tarjeta o efectivo?',
-          tags: ['restaurant', 'payments']
-        }
-      ]
-    },
-    {
-      title: 'Pedir ayuda en emergencia',
+      title: 'Emergencia leve',
       level: 'B1',
       phrases: [
         {
-          expected: 'Please call an ambulance. My friend is hurt.',
-          translation: 'Por favor llame una ambulancia. Mi amigo está herido.',
-          tags: ['emergencies', 'health']
+          expected: 'I’m not feeling well. I need a doctor.',
+          translation: 'No me siento bien. Necesito un médico.',
+          tags: ['health', 'urgent']
         },
         {
-          expected: "Stay calm. Help is on the way right now.",
-          translation: 'Mantén la calma. La ayuda viene en camino ahora.',
-          tags: ['emergencies', 'responses']
+          expected: 'We can call one right away.',
+          translation: 'Podemos llamar a uno de inmediato.',
+          tags: ['health', 'urgent']
         }
       ]
     },
     {
-      title: 'Tareas del hogar',
+      title: 'Error en cobro',
       level: 'A2',
       phrases: [
         {
-          expected: 'Can you take out the trash tonight?',
-          translation: '¿Puedes sacar la basura esta noche?',
-          tags: ['household', 'chores']
+          expected: 'There seems to be a mistake on my bill.',
+          translation: 'Parece haber un error en mi cuenta.',
+          tags: ['billing', 'complaints']
         },
         {
-          expected: "Sure, I'll do it after dinner.",
-          translation: 'Claro, lo haré después de cenar.',
-          tags: ['household', 'commitments']
+          expected: 'Let me fix that for you.',
+          translation: 'Permítame corregirlo.',
+          tags: ['billing', 'complaints']
         }
       ]
     },
     {
-      title: 'Hablar del día y la hora',
+      title: 'Fin de semana',
       level: 'A1',
       phrases: [
         {
-          expected: 'What time does the store open on Sundays?',
-          translation: '¿A qué hora abre la tienda los domingos?',
-          tags: ['time-day', 'shopping']
+          expected: 'What do you usually do on weekends?',
+          translation: '¿Qué sueles hacer los fines de semana?',
+          tags: ['small-talk', 'weekend']
         },
         {
-          expected: 'It opens at ten in the morning.',
-          translation: 'Abre a las diez de la mañana.',
-          tags: ['time-day', 'answers']
-        }
-      ]
-    },
-    {
-      title: 'Hablar de preferencias',
-      level: 'A2',
-      phrases: [
-        {
-          expected: 'I prefer tea, but I can drink coffee too.',
-          translation: 'Prefiero té, pero también puedo tomar café.',
-          tags: ['preferences', 'food-drink']
-        },
-        {
-          expected: 'Great, then I\'ll make tea for both of us.',
-          translation: 'Genial, entonces prepararé té para los dos.',
-          tags: ['preferences', 'responses']
-        }
-      ]
-    },
-    {
-      title: 'Hacer una queja básica',
-      level: 'B1',
-      phrases: [
-        {
-          expected: "Excuse me, this product doesn't work properly.",
-          translation: 'Disculpe, este producto no funciona correctamente.',
-          tags: ['complaints', 'basic-services']
-        },
-        {
-          expected: "I'm sorry about that. We can replace it today.",
-          translation: 'Lamento eso. Podemos reemplazarlo hoy.',
-          tags: ['complaints', 'solutions']
+          expected: 'I usually spend time with my family.',
+          translation: 'Normalmente paso tiempo con mi familia.',
+          tags: ['small-talk', 'weekend']
         }
       ]
     }
