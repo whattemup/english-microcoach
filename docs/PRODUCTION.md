@@ -1,66 +1,54 @@
-# Production Notes
+# Production Guide
 
-## Environment variables (API)
+## Runtime baseline
 
-Defined in `apps/api/.env.example` and validated in `apps/api/src/config.ts`:
+- Node.js: **22.x** (matches `apps/api/Dockerfile` base image `node:22-alpine`).
+- pnpm: **9.12.0** (from root `packageManager`).
 
-- Core: `NODE_ENV`, `PORT`, `DATABASE_URL`
-- Auth: `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_ACCESS_EXPIRES`, `JWT_REFRESH_EXPIRES`
-- Providers: `MOCK_STT`, `MOCK_TTS`, `MOCK_LLM`, `STT_PROVIDER`, `TTS_PROVIDER`, `LLM_PROVIDER`
-- Uploads: `UPLOAD_DIR`, `MAX_UPLOAD_MB`
-- Network/security: `CORS_ORIGINS`, `TRUST_PROXY`
-- Rate limit: `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `REDIS_URL`
-- Logging: `LOG_LEVEL`
+## Required environment variables (API)
 
-## Docker notes
+From `apps/api/.env.example`:
 
-- Local infra: `docker-compose.local.yml` (`postgres`, `redis`).
-- DB-only quick start: `docker-compose.yml` (`postgres` only).
-- Production stack template: `docker-compose.prod.yml` (`postgres`, `redis`, `api`).
+- `PORT` (default `3001`).
+- `DATABASE_URL` (required PostgreSQL DSN).
+- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` (required, long random values).
+- `JWT_ACCESS_EXPIRES`, `JWT_REFRESH_EXPIRES` (token TTLs).
+- `MOCK_STT`, `MOCK_TTS`, `MOCK_LLM` (`false` in real-provider prod; `true` for mock-only prod).
+- `STT_PROVIDER`, `TTS_PROVIDER`, `LLM_PROVIDER` (must not be `not_configured` when corresponding mock flag is `false`).
+- `UPLOAD_DIR` (use persistent writable path, e.g. `/data/uploads`).
+- `MAX_UPLOAD_MB`.
+- `CORS_ORIGINS` (comma-separated allowed origins).
+- `TRUST_PROXY` (`true` behind reverse proxy/LB).
+- `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`.
+- `REDIS_URL` (optional; recommended for multi-instance rate limiting).
+- `LOG_LEVEL`.
 
-Bring up production compose template:
+## CORS / proxy
+
+- Production CORS is allowlist-based (`CORS_ORIGINS`). Empty list blocks browser origins.
+- Set `TRUST_PROXY=true` when API is behind Nginx/ALB/Ingress so IP/rate-limit behavior is correct.
+
+## Redis guidance
+
+- Optional: API runs without Redis.
+- Recommended for production: set `REDIS_URL` for shared rate-limiting state.
+- If `REDIS_URL` is set and Redis is down, `/ready` returns `503`.
+
+## Upload storage
+
+- Audio uploads are written to `UPLOAD_DIR`.
+- Mount this path to persistent storage (volume/object-store sidecar strategy).
+- In `docker-compose.prod.yml`, default is `/data/uploads` mounted to volume `uploads`.
+
+## Migrations (release flow)
 
 ```bash
-docker compose -f docker-compose.prod.yml --env-file .env up -d --build
-```
-
-## Build steps
-
-```bash
-pnpm install
 pnpm --filter @emc/api prisma:generate
+pnpm --filter @emc/api exec prisma migrate deploy
 pnpm --filter @emc/api build
-pnpm --filter @emc/api test
-pnpm --filter @emc/mobile build
 ```
 
-## Deployment steps (single host template)
+## Health endpoints
 
-1. Provide production secrets in `.env` for compose.
-2. Start `docker-compose.prod.yml`.
-3. Run DB migration workflow before serving traffic.
-4. Verify probes:
-
-```bash
-curl -sS http://localhost:3001/health
-curl -sS http://localhost:3001/ready
-```
-
-## Production warnings
-
-- Real STT/TTS/LLM providers are not implemented beyond `not_configured`; disabling mocks without adding providers will break those flows.
-- In production CORS defaults to deny when `CORS_ORIGINS` is empty.
-- `DELETE /me` is a hard delete.
-- Uploaded audio files are stored on disk; configure durable writable storage (`UPLOAD_DIR`).
-
-## Key rotation notes
-
-- Rotate `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` together in a planned window.
-- Existing refresh tokens signed by previous secret become invalid after rotation.
-- Keep secret values outside source control (secret manager or host-level env).
-
-## Rate limiting notes
-
-- API always applies rate limiting middleware except `/health` and `/ready`.
-- If `REDIS_URL` is set and available, limiter uses Redis store (better for multi-instance).
-- If Redis init/runtime fails, limiter logs a warning and falls back/fails open to avoid total outage.
+- `GET /health`: liveness, returns `200 { ok: true }` if process is alive.
+- `GET /ready`: readiness, checks Postgres and optional Redis; returns `503` when not ready.

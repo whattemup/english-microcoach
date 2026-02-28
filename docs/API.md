@@ -1,95 +1,121 @@
 # API Reference
 
-Base URL (local default): `http://localhost:3001`
+Base URL local: `http://localhost:3001`
 
-Auth for protected routes:
-
-```http
-Authorization: Bearer <accessToken>
-```
-
-## Health / readiness
+## Probes
 
 ### `GET /health`
-- Auth: no
-- Response: `{ "ok": true }`
+- Auth: no.
+- Body: none.
+- `200`: `{ "ok": true }`.
 
 ### `GET /ready`
-- Auth: no
-- Checks DB and (optionally) Redis connectivity.
-- Returns `503` when dependencies are not ready.
+- Auth: no.
+- Body: none.
+- `200`: `{ "ok": true, "ready": true, "status": { "database": true, "redis": true|false } }`.
+- `503`: same shape with `ok: false` when DB/Redis readiness fails.
 
 ## Auth
 
 ### `POST /auth/register`
-- Auth: no
-- Body: `{ "email": string, "password": string, "name"?: string }`
-- Response: `{ "accessToken": string, "refreshToken": string }`
+- Auth: no.
+- Body: `{ email, password, name? }`.
+- `201`: `{ accessToken, refreshToken }`.
+- Common errors:
+  - `409` `{ message: "El correo ya está registrado" }`
+  - `400` `{ message: "Datos inválidos", details[] }`
 
 ### `POST /auth/login`
-- Auth: no
-- Body: `{ "email": string, "password": string }`
-- Response: `{ "accessToken": string, "refreshToken": string }`
+- Auth: no.
+- Body: `{ email, password }`.
+- `200`: `{ accessToken, refreshToken }`.
+- Common errors:
+  - `401` `{ message: "Credenciales inválidas" }`
+  - `400` `{ message: "Datos inválidos", details[] }`
 
 ### `POST /auth/refresh`
-- Auth: no
-- Body: `{ "refreshToken": string }`
-- Response: `{ "accessToken": string, "refreshToken": string }`
+- Auth: no.
+- Body: `{ refreshToken }`.
+- `200`: `{ accessToken, refreshToken }`.
+- Common errors:
+  - `400` `{ message: "Datos inválidos", details[] }`
+  - `401` `{ message: "No autorizado" }` (JWT invalid)
 
-## Catalog (public)
+## Catalog
 
 ### `GET /categories`
-- Auth: no
-- Response: lesson categories.
+- Auth: no.
+- Body: none.
+- `200`: `Category[]` where `Category = { id, name, description, createdAt }`.
 
 ### `GET /lessons?categoryId=<number>`
-- Auth: no
-- `categoryId` is required.
+- Auth: no.
+- Body: none.
+- `200`: `Lesson[]` where `Lesson = { id, categoryId, title, level, createdAt, updatedAt }`.
+- Common errors:
+  - `400` `{ message: "categoryId es requerido" }`
 
 ### `GET /lessons/:id`
-- Auth: no
-- Returns lesson + phrases.
+- Auth: no.
+- Body: none.
+- `200`: `LessonDetail` including `phrases[]`.
+- Common errors:
+  - `404` `{ message: "Lección no encontrada" }`
 
-## Attempts (protected)
+## Protected routes
 
-### `POST /attempts`
-- Auth: yes
-- Content type: `multipart/form-data`
+All routes below require `Authorization: Bearer <accessToken>`.
+
+### `POST /attempts` (multipart)
+- Auth: yes.
+- Content-Type: `multipart/form-data`.
 - Fields:
-  - `audio` (file, required)
-  - `phraseId` (number, required)
-  - `expectedText` (string, required)
-- Response includes scoring output:
-  - `score`, `highlights`, `missing`, `extra`, `spanishTip`, `transcript`, `confidence`, `attemptId`
+  - `audio` (required file)
+  - `phraseId` (number)
+  - `expectedText` (string)
+- `200`:
+  - `{ score, highlights, missing, extra, spanishTip, transcript, confidence, attemptId }`
+- Common errors:
+  - `400` `{ message: "Audio requerido" }`
+  - `404` `{ message: "Frase no encontrada" }`
+  - `400` `{ message: "Datos inválidos", details[] }`
+  - `400` `{ message: "Error al subir audio. Verifica el tamaño y formato." }`
+  - `501` `{ error: "provider_not_configured", providerType, hint }`
 
-## Roleplay (protected)
-
-### `POST /roleplay`
-- Auth: yes
-- Content type: `multipart/form-data`
+### `POST /roleplay` (multipart)
+- Auth: yes.
+- Content-Type: `multipart/form-data`.
 - Fields:
-  - `audio` (file, required)
-  - `context` (string, required)
-- Response:
-  - `transcript`
-  - `corrected`
-  - `spanishExplanation`
-  - `nextSuggestedResponse`
-
-## Review (protected)
+  - `audio` (required file)
+  - `context` (string)
+- `200`:
+  - `{ transcript, corrected, spanishExplanation, nextSuggestedResponse }`
+- Common errors:
+  - `400` `{ message: "Audio requerido" }`
+  - `400` `{ message: "Datos inválidos", details[] }`
+  - `501` `{ error: "provider_not_configured", providerType, hint }`
 
 ### `GET /review/today`
-- Auth: yes
-- Returns review items with related phrase/lesson.
+- Auth: yes.
+- Body: none.
+- `200`: `ReviewItem[]` with `phrase` + nested `lesson` included.
 
 ### `POST /review/submit`
-- Auth: yes
-- Body: `{ "reviewItemId": number, "quality": 0..5 }`
-- Updates SRS state and `dueDate`.
-
-## Account (protected)
+- Auth: yes.
+- Body: `{ reviewItemId, quality }` where `quality` is integer `0..5`.
+- `200`: updated `ReviewItem`.
+- Common errors:
+  - `404` `{ message: "Elemento de repaso no encontrado" }`
+  - `400` `{ message: "Datos inválidos", details[] }`
 
 ### `DELETE /me`
-- Auth: yes
-- Hard-deletes current user and related attempts/mistakes/review items.
-- Response: `204 No Content`
+- Auth: yes.
+- Body: none.
+- `204`: empty response.
+
+## Global/common errors
+
+- `401` `{ message: "No autorizado: token faltante" }`
+- `401` `{ message: "No autorizado: token inválido" }`
+- `429` `{ message: "Demasiadas solicitudes. Intenta de nuevo en unos minutos." }`
+- `500` `{ message: "Error interno del servidor" }` (production)

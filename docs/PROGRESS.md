@@ -1,16 +1,14 @@
 # Progress Snapshot
 
-## Current baseline
+## Implemented
 
-- Monorepo contains `@emc/api`, `@emc/mobile`, and `@emc/shared`.
-- API has auth, catalog, attempts, roleplay, review, and account deletion routes wired.
-- Prisma schema + seed are in place (3 categories, 30 lessons in seed script).
-- Mobile app has screens for login/register/home/lessons/lesson detail/roleplay/review/profile.
+- pnpm monorepo with API, mobile, and shared package.
+- API routes for auth, catalog, attempts, roleplay, review, and account deletion.
+- Prisma schema + seed (3 categories, 30 lessons).
+- Mobile screens for auth, lessons, roleplay, review, profile.
+- Expo wrapper script in mobile to avoid pnpm hoisting CLI path issues.
 
-## Documentation objective
+## Current operating mode
 
-Documentation was rewritten to match code and scripts exactly, including:
-- Expo wrapper usage (`node ./scripts/expo.mjs`)
-- pnpm workspace + hoisting configuration
-- actual docker compose files/services
-- real env vars and route contracts
+- Mock STT/TTS/LLM is the default local path.
+- Real provider interfaces exist, but concrete provider integrations are not implemented yet.

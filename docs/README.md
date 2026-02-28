@@ -1,11 +1,9 @@
-# Documentation Index
+# Docs Index
 
-Canonical documentation for the current repository state.
-
-- [SETUP.md](./SETUP.md) — local setup from clean clone.
-- [API.md](./API.md) — implemented HTTP routes and contracts.
-- [SOURCE_OF_TRUTH.md](./SOURCE_OF_TRUTH.md) — product + architecture summary.
-- [HANDOFF.md](./HANDOFF.md) — canonical technical handoff/spec.
-- [PRODUCTION.md](./PRODUCTION.md) — production environment/deploy notes.
-- [DECISIONS.md](./DECISIONS.md) — architecture decisions reflected in code.
-- [PROGRESS.md](./PROGRESS.md) — concise status snapshot.
+- [`HANDOFF.md`](./HANDOFF.md): canonical technical spec (source of truth for architecture/runtime behavior).
+- [`SETUP.md`](./SETUP.md): local setup commands.
+- [`API.md`](./API.md): endpoint contract matching `apps/api/src/routes`.
+- [`PRODUCTION.md`](./PRODUCTION.md): production env + deploy checklist.
+- [`SOURCE_OF_TRUTH.md`](./SOURCE_OF_TRUTH.md): files that define behavior.
+- [`DECISIONS.md`](./DECISIONS.md): active architecture decisions.
+- [`PROGRESS.md`](./PROGRESS.md): current implementation snapshot.
