@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { getLesson } from '../api/endpoints';
@@ -9,6 +9,7 @@ import { recordAudio } from '../utils/audio';
 import { apiRequest } from '../api/client';
 import { PhraseDiff } from '../components/PhraseDiff';
 import { SpanishError } from '../components/SpanishError';
+import * as Speech from 'expo-speech';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LessonDetail'>;
 
@@ -30,8 +31,6 @@ type LessonDetail = {
 
 const EMPTY_LESSON_MESSAGE = 'Esta lección no tiene frases todavía.';
 const EXPLAIN_ERROR = 'No se pudo obtener explicación';
-const SPEECH_ERROR = 'No se pudo reproducir audio';
-const MOCK_AUDIO_MESSAGE = 'Reproducción simulada: escucha y repite la frase en voz alta.';
 
 const buildMockExplanation = (phrase: LessonPhrase): string =>
   `Esta frase se usa para comunicar: "${phrase.expected}". En español significa: "${phrase.translation}".`;
@@ -42,7 +41,6 @@ export const LessonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const [selectedPhraseId, setSelectedPhraseId] = useState<number | null>(null);
   const [explanation, setExplanation] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [hearFeedback, setHearFeedback] = useState<string>('');
   const [rec, setRec] = useState<{ stop: () => Promise<string> } | null>(null);
   const [result, setResult] = useState<any>(null);
 
@@ -65,12 +63,27 @@ export const LessonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const hasPhrase = !!phrase?.expected;
   const canRecord = hasPhrase;
 
+  const handleSpeak = () => {
+    const textToSpeak = phrase?.expected?.trim();
+    if (!textToSpeak) {
+      Alert.alert('Error', 'No hay frase para reproducir.');
+      return;
+    }
+
+    try {
+      Speech.stop();
+      Speech.speak(textToSpeak, { language: 'en-US', rate: 0.9 });
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'No se pudo reproducir el audio.');
+    }
+  };
+
   useEffect(() => {
     setExplanation('');
     setError('');
     setResult(null);
     setRec(null);
-    setHearFeedback('');
   }, [phrase?.id]);
 
   return <View style={{ flex: 1, padding: 16 }}>
@@ -111,15 +124,7 @@ export const LessonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         <PrimaryButton
           title="Escucharlo"
           disabled={!hasPhrase}
-          onPress={async () => {
-            if (!phrase) return;
-            setError('');
-            try {
-              setHearFeedback(`${MOCK_AUDIO_MESSAGE} "${phrase.expected}"`);
-            } catch {
-              setError(SPEECH_ERROR);
-            }
-          }}
+          onPress={handleSpeak}
         />
         <PrimaryButton
           title="Practicar (Roleplay)"
@@ -140,7 +145,6 @@ export const LessonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     )}
 
     {explanation ? <Text style={{ marginTop: 8 }}>{explanation}</Text> : null}
-    {hearFeedback ? <Text style={{ marginTop: 8, color: '#4b5563' }}>{hearFeedback}</Text> : null}
     <SpanishError message={error} />
 
     <PrimaryButton title={rec ? 'Detener grabación' : 'Grabar voz'} disabled={!canRecord && !rec} onPress={async () => {
