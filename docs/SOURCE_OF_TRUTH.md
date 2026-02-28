@@ -1,81 +1,44 @@
 # Source of Truth
 
-## Product goals
+## Product scope currently implemented
 
-English MicroCoach focuses on:
-- Micro-lessons for practical spoken English.
-- Speaking practice via short audio attempts.
-- Instant feedback after each attempt.
-- One-turn roleplay practice.
-- Spaced repetition to revisit weak content.
+- Email/password auth with JWT access + refresh tokens.
+- Public lesson browsing by category.
+- Audio attempt submission with deterministic transcript-vs-expected scoring.
+- Roleplay endpoint that returns correction/explanation/suggested next response.
+- Review queue using spaced repetition updates.
+- Account delete endpoint.
 
-## Tech stack
+## Stack
 
-- **Mobile**: Expo + React Native + TypeScript (`apps/mobile`).
-- **API**: Express + TypeScript (`apps/api`).
-- **Database**: PostgreSQL + Prisma.
-- **Auth**: JWT access + refresh tokens.
-- **Shared package**: `@emc/shared` for schemas/types used by both apps.
+- Mobile: Expo + React Native + TypeScript
+- API: Express + TypeScript
+- Data: PostgreSQL + Prisma
+- Shared contracts: `@emc/shared` (Zod + types)
 
-## System overview
+## Runtime shape
 
 ```text
-Mobile app (Expo)
-  -> API (Express routes + services)
-    -> PostgreSQL (Prisma)
-    -> Optional external providers (STT / TTS / LLM), with mock fallback
+Mobile app -> API -> PostgreSQL
+                \-> Redis (optional for rate-limit store and readiness check)
+                \-> STT/TTS/LLM provider abstraction (mock-first)
 ```
 
-The app is expected to run without external provider keys by using mock mode flags.
+## Auth boundary
 
-## API access model
+Public routes:
+- `/health`, `/ready`
+- `/auth/register`, `/auth/login`, `/auth/refresh`
+- `/categories`, `/lessons`, `/lessons/:id`
 
-### Public
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/refresh`
-- `GET /categories`
-- `GET /lessons?categoryId=...`
-- `GET /lessons/:id`
+Protected routes:
+- `/attempts`
+- `/roleplay`
+- `/review/today`, `/review/submit`
+- `/me`
 
-### Protected (Bearer token required)
-- `POST /attempts`
-- `POST /roleplay`
-- `GET /review/today`
-- `POST /review/submit`
+## Provider behavior
 
-## Mock mode design
-
-API behavior is controlled by environment flags:
-- `MOCK_STT`
-- `MOCK_TTS`
-- `MOCK_LLM`
-
-Default behavior in current config treats these as enabled unless explicitly set to `false`, so local development works without external API keys.
-
-## Data model summary
-
-Core Prisma models:
-- `User`
-- `LessonCategory`
-- `Lesson`
-- `LessonPhrase`
-- `Attempt`
-- `Mistake`
-- `ReviewItem`
-
-These models cover user identity, lesson catalog, attempt tracking, mistake extraction, and spaced repetition scheduling.
-
-## Scoring model
-
-Attempt scoring is deterministic and local:
-- Normalize expected text and transcript into tokens.
-- Compute token-level Levenshtein edit distance.
-- Derive score from similarity percentage.
-- Return:
-  - `score`
-  - `missing` words
-  - `extra` words
-  - `highlights` (correct/missing/extra/different)
-
-This gives fast, explainable feedback without requiring an external model call.
+- `MOCK_STT`, `MOCK_TTS`, `MOCK_LLM` control mock behavior.
+- In production (`NODE_ENV=production`), mocks default to off unless explicitly enabled.
+- Real providers are not implemented beyond the `not_configured` fallback.

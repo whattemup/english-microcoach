@@ -1,10 +1,10 @@
-# Setup (Windows-first)
+# Local Setup
 
 ## Requirements
 
 - Node.js 20+
 - pnpm 9+
-- Docker Desktop (Linux engine running)
+- Docker (with Compose)
 
 ## 1) Install dependencies
 
@@ -12,87 +12,54 @@
 pnpm install
 ```
 
-## 2) Start PostgreSQL (+Redis recommended) (Docker)
+## 2) Configure env files
 
-From repo root:
+```bash
+cp apps/api/.env.example apps/api/.env
+cp apps/mobile/.env.example apps/mobile/.env
+```
+
+## 3) Start local infrastructure
 
 ```bash
 docker compose -f docker-compose.local.yml up -d
 ```
 
-## 3) Configure env files
+Services started by this file:
+- `postgres` on `5432`
+- `redis` on `6379`
 
-### API (`apps/api/.env`)
-
-Copy example and verify at least:
-
-```env
-DATABASE_URL="postgresql://emc:emc@localhost:5432/emc?schema=public"
-JWT_ACCESS_SECRET="access_secret_dev__change_me_please"
-JWT_REFRESH_SECRET="refresh_secret_dev__change_me_please"
-JWT_ACCESS_EXPIRES="15m"
-JWT_REFRESH_EXPIRES="7d"
-MOCK_STT=true
-MOCK_TTS=true
-MOCK_LLM=true
-
-# Optional: persistent rate limiting
-REDIS_URL="redis://localhost:6379"
-```
-
-### Mobile (`apps/mobile/.env`)
-
-```env
-EXPO_PUBLIC_API_URL=http://localhost:3001
-```
-
-## 4) Prisma workflow (always use `pnpm exec`)
-
-On Windows, prefer direct `pnpm --filter @emc/api exec prisma ...` commands to avoid shim/path issues.
+## 4) Prepare database
 
 ```bash
-pnpm --filter @emc/api exec prisma generate
-pnpm --filter @emc/api exec prisma migrate dev
-pnpm --filter @emc/api exec prisma db seed
+pnpm --filter @emc/api prisma:generate
+pnpm --filter @emc/api prisma:migrate
+pnpm --filter @emc/api prisma:seed
 ```
 
-## 5) Start services
+## 5) Run apps
 
 ```bash
 pnpm dev
 ```
 
-This runs API + mobile dev servers in parallel.
+## Useful commands
 
-## Troubleshooting
+- API only:
 
-### `P1001: Can't reach database server`
+```bash
+pnpm --filter @emc/api dev
+```
 
-- Check Docker container is running: `docker compose ps`
-- Confirm `DATABASE_URL` host/port/db/user/password match docker compose config.
-- Retry migration once DB is healthy.
+- Mobile only:
 
-### Prisma EPERM rename lock (Windows)
+```bash
+pnpm --filter @emc/mobile dev
+```
 
-Symptom: EPERM during Prisma engine rename/generate.
+- Reset DB:
 
-Workaround:
-1. Stop Node/TSX/Expo processes that may lock files.
-2. Delete Prisma cache folder used by pnpm Prisma client install:
-   `node_modules\\.pnpm\\@prisma+client@<version>_prisma@<version>\\node_modules\\.prisma`
-3. Rerun:
-   `pnpm --filter @emc/api exec prisma generate`
-
-Optional: add Windows Defender exclusion for the repo to reduce file lock contention.
-
-### Docker Desktop engine pipe error
-
-If Docker commands fail with pipe/engine connection errors:
-- Open Docker Desktop.
-- Ensure Docker Desktop is running and set to Linux containers.
-- Wait until engine status is healthy, then rerun `docker compose up -d`.
-
-## Expo networking notes
-
-- Physical phone + Expo Go: use LAN IP (`http://<your-lan-ip>:3001`), not `localhost`.
-- Android emulator: use `http://10.0.2.2:3001`.
+```bash
+pnpm --filter @emc/api exec prisma migrate reset --force
+pnpm --filter @emc/api prisma:seed
+```

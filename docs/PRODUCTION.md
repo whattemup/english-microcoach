@@ -1,71 +1,66 @@
-# Production Deployment (Practical)
+# Production Notes
 
-This repo is set up to run locally with Docker Compose and to deploy the API as a container.
+## Environment variables (API)
 
-## What “production-ready” means here
+Defined in `apps/api/.env.example` and validated in `apps/api/src/config.ts`:
 
-- Fail-fast env validation
-- Health (`/health`) + readiness (`/ready`) endpoints
-- Structured request logging + redaction
-- Rate limiting (Redis-backed when `REDIS_URL` is set)
-- If `REDIS_URL` is set, `/ready` reflects Redis availability; the API still runs using in-memory fallback rate limiting if Redis is down.
-- Safer uploads (size limit + audio-only allowlist)
-- Graceful shutdown on SIGTERM/SIGINT
-- GitHub Actions CI (build + unit tests)
+- Core: `NODE_ENV`, `PORT`, `DATABASE_URL`
+- Auth: `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_ACCESS_EXPIRES`, `JWT_REFRESH_EXPIRES`
+- Providers: `MOCK_STT`, `MOCK_TTS`, `MOCK_LLM`, `STT_PROVIDER`, `TTS_PROVIDER`, `LLM_PROVIDER`
+- Uploads: `UPLOAD_DIR`, `MAX_UPLOAD_MB`
+- Network/security: `CORS_ORIGINS`, `TRUST_PROXY`
+- Rate limit: `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `REDIS_URL`
+- Logging: `LOG_LEVEL`
 
-## Deploy with Docker Compose (single host)
+## Docker notes
 
-1) On the server, create a `.env` file (next to `docker-compose.prod.yml`) with at least:
+- Local infra: `docker-compose.local.yml` (`postgres`, `redis`).
+- DB-only quick start: `docker-compose.yml` (`postgres` only).
+- Production stack template: `docker-compose.prod.yml` (`postgres`, `redis`, `api`).
 
-```bash
-POSTGRES_PASSWORD=change_me
-JWT_ACCESS_SECRET=use_a_long_random_secret
-JWT_REFRESH_SECRET=use_a_long_random_secret
-```
-
-2) Bring up the stack:
+Bring up production compose template:
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 ```
 
-By default, `MOCK_STT`, `MOCK_TTS`, and `MOCK_LLM` are `true` unless you set them in server `.env`.
-
-If your real providers are configured, set mocks off explicitly:
+## Build steps
 
 ```bash
-MOCK_STT=false
-MOCK_TTS=false
-MOCK_LLM=false
+pnpm install
+pnpm --filter @emc/api prisma:generate
+pnpm --filter @emc/api build
+pnpm --filter @emc/api test
+pnpm --filter @emc/mobile build
 ```
 
-3) Verify:
+## Deployment steps (single host template)
+
+1. Provide production secrets in `.env` for compose.
+2. Start `docker-compose.prod.yml`.
+3. Run DB migration workflow before serving traffic.
+4. Verify probes:
 
 ```bash
 curl -sS http://localhost:3001/health
 curl -sS http://localhost:3001/ready
 ```
 
+## Production warnings
 
-### Provider scaffolding environment variables
+- Real STT/TTS/LLM providers are not implemented beyond `not_configured`; disabling mocks without adding providers will break those flows.
+- In production CORS defaults to deny when `CORS_ORIGINS` is empty.
+- `DELETE /me` is a hard delete.
+- Uploaded audio files are stored on disk; configure durable writable storage (`UPLOAD_DIR`).
 
-- `STT_PROVIDER`
-- `TTS_PROVIDER`
-- `LLM_PROVIDER`
+## Key rotation notes
 
-Defaults are `not_configured`. If you set any `MOCK_*` flag to `false`, you must set the corresponding `*_PROVIDER` to a real provider value (real provider integrations are not implemented yet in this scaffold).
+- Rotate `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` together in a planned window.
+- Existing refresh tokens signed by previous secret become invalid after rotation.
+- Keep secret values outside source control (secret manager or host-level env).
 
-## Mobile production
+## Rate limiting notes
 
-For Expo/React Native, use EAS Build + EAS Update.
-
-- Set `EXPO_PUBLIC_API_URL` to your API base URL.
-- Use HTTPS in production.
-
-## Ops checklist
-
-- Put API behind a reverse proxy (Caddy/Nginx) with HTTPS.
-- Set `TRUST_PROXY=true` when behind a proxy.
-- In production, set CORS_ORIGINS explicitly; if empty, browser cross-origin requests are denied.
-- Use a real STT/TTS/LLM provider (`MOCK_* = false`) and secure API keys via secret manager.
-- Use a managed Postgres (recommended) for backups and upgrades.
+- API always applies rate limiting middleware except `/health` and `/ready`.
+- If `REDIS_URL` is set and available, limiter uses Redis store (better for multi-instance).
+- If Redis init/runtime fails, limiter logs a warning and falls back/fails open to avoid total outage.
