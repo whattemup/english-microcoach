@@ -1,11 +1,14 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
 import { config } from '../config.js';
 import { ProviderNotConfiguredError } from '../providers/types.js';
 
-const isRecordNotFound = (e: unknown): boolean =>
-  e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025';
+type PrismaKnownError = { code: string };
+
+const isPrismaKnownError = (error: unknown): error is PrismaKnownError =>
+  typeof error === 'object' && error !== null && 'code' in error && typeof (error as { code?: unknown }).code === 'string';
+
+const isRecordNotFound = (e: unknown): boolean => isPrismaKnownError(e) && e.code === 'P2025';
 
 export const errorHandler = (err: unknown, req: Request, res: Response, _next: NextFunction): void => {
   const log = (req as any).log;
@@ -31,7 +34,7 @@ export const errorHandler = (err: unknown, req: Request, res: Response, _next: N
     res.status(404).json({ message: 'Recurso no encontrado' });
     return;
   }
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (isPrismaKnownError(err)) {
     // Unique constraint violation
     if (err.code === 'P2002') {
       res.status(409).json({ message: 'Conflicto: ya existe' });
