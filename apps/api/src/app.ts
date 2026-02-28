@@ -12,6 +12,7 @@ import attemptsRoutes from './routes/attempts.js';
 import roleplayRoutes from './routes/roleplay.js';
 import reviewRoutes from './routes/review.js';
 import meRoutes from './routes/me.js';
+import progressRoutes from './routes/progress.js';
 import { apiRateLimit } from './middleware/rateLimit.js';
 import { authMiddleware } from './middleware/auth.js';
 import { errorHandler } from './middleware/error.js';
@@ -156,5 +157,6 @@ app.use('/attempts', authMiddleware, attemptsRoutes);
 app.use('/roleplay', authMiddleware, roleplayRoutes);
 app.use('/review', authMiddleware, reviewRoutes);
 app.use('/me', authMiddleware, meRoutes);
+app.use('/progress', authMiddleware, progressRoutes);
 
 app.use(errorHandler);
