@@ -40,20 +40,21 @@ export const LessonDetailScreen: React.FC<Props> = ({ route }) => {
   }, [accessToken, route.params.lessonId]);
 
   const phrase = useMemo(() => lesson?.phrases?.[0], [lesson]);
-  const canRecord = !!phrase?.expected;
+  const hasPhrase = !!phrase?.expected;
+  const canRecord = hasPhrase;
 
   return <View style={{ flex: 1, padding: 16 }}>
     <Text style={{ fontSize: 20, fontWeight: '700' }}>{lesson?.title}</Text>
-    {phrase ? (
+    {hasPhrase ? (
       <>
-        <Text style={{ marginTop: 12 }}>{phrase.expected}</Text>
-        <Text style={{ color: '#4b5563' }}>{phrase.translation}</Text>
+        <Text style={{ marginTop: 12 }}>{phrase?.expected}</Text>
+        <Text style={{ color: '#4b5563' }}>{phrase?.translation}</Text>
       </>
     ) : (
       <Text style={{ marginTop: 12, color: '#4b5563' }}>{EMPTY_LESSON_MESSAGE}</Text>
     )}
 
-    <PrimaryButton title={rec ? 'Detener grabación' : 'Grabar voz'} onPress={async () => {
+    <PrimaryButton title={rec ? 'Detener grabación' : 'Grabar voz'} disabled={!canRecord && !rec} onPress={async () => {
       if (!canRecord) return;
 
       if (!rec) setRec(await recordAudio());
