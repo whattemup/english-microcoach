@@ -1,63 +1,26 @@
 # Architecture Decisions
 
-## 2026-02-26 — pnpm monorepo + shared package export-from-source
+## 1) pnpm workspace + hoisted linker
 
-**Context**
-Mobile and API share request/response schemas and types.
+- Keep repository as a pnpm workspace (`apps/*`, `packages/*`).
+- Use hoisted node linker (`node-linker=hoisted`, `public-hoist-pattern[]=*`, `shamefully-hoist=true`) for current Expo/React Native dependency resolution needs.
 
-**Decision**
-Use a pnpm workspace monorepo with `packages/shared` imported by both `apps/mobile` and `apps/api` from source.
+## 2) Shared validation contracts in `@emc/shared`
 
-**Consequences**
-- Single source for shared validation contracts.
-- Faster iteration across API and mobile.
-- Requires workspace-aware tooling and consistent TS config.
+- Store shared Zod schemas and TypeScript DTO types in one package used by API and mobile.
+- API validates requests against shared schemas at route boundaries.
 
-## 2026-02-26 — JWT access + refresh tokens
+## 3) Stateless auth
 
-**Context**
-The app needs authenticated operations without server sessions.
+- Use JWT access and refresh tokens.
+- Keep API stateless with bearer auth middleware on protected routes.
 
-**Decision**
-Use JWT access tokens for API calls and refresh tokens for token renewal via `/auth/refresh`.
+## 4) Mock-first provider abstraction
 
-**Consequences**
-- Stateless API auth flow.
-- Mobile must manage token lifecycle.
-- Requires secure secret management per environment.
+- Keep STT/TTS/LLM behind provider interfaces.
+- Support local operation without external credentials through mock toggles.
 
-## 2026-02-26 — Public browsing endpoints
+## 5) Deterministic scoring and simple SRS
 
-**Context**
-Lesson discovery should work before deep authenticated activity.
-
-**Decision**
-Keep category and lesson browsing public (`/categories`, `/lessons`, `/lessons/:id`).
-
-**Consequences**
-- Lower friction to explore content.
-- Clear boundary between browse vs progress-tracking actions.
-
-## 2026-02-26 — Deterministic scoring
-
-**Context**
-Speaking feedback should be fast, explainable, and testable.
-
-**Decision**
-Use normalized token comparison + edit distance for score/missing/extra/highlights.
-
-**Consequences**
-- Predictable outputs and easy unit testing.
-- Does not capture nuanced pronunciation quality beyond transcript quality.
-
-## 2026-02-26 — Mock external providers via env flags
-
-**Context**
-Local development should work without external STT/TTS/LLM credentials.
-
-**Decision**
-Control provider integrations with `MOCK_STT`, `MOCK_TTS`, and `MOCK_LLM` flags.
-
-**Consequences**
-- Developer onboarding is simpler and offline-friendly.
-- Production-like behavior requires explicitly disabling mocks and configuring provider keys.
+- Speaking attempt score comes from normalized token Levenshtein similarity.
+- Review scheduling uses an SM-2-like update function over `intervalDays`, `repetitions`, and `easeFactor`.

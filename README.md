@@ -1,17 +1,15 @@
 # English MicroCoach
 
-English MicroCoach is a pnpm monorepo for practicing spoken English with short lessons, audio attempts, and feedback loops.
-It includes an Express API, an Expo mobile app, and a shared schema/types package.
-The current repo is optimized for local development with Docker Postgres and mock AI provider flags.
+English MicroCoach is a pnpm workspace with an Expo mobile app and an Express API for short spoken-English practice loops: record audio, get deterministic scoring, and review weak phrases with SRS-backed scheduling.
 
-## Monorepo structure
+## Architecture
 
-- `apps/api` — Express + TypeScript API
-- `apps/mobile` — Expo + React Native app
-- `packages/shared` — shared Zod schemas and TS types
-- `docs` — project documentation and handoff notes
+- `apps/mobile` — Expo React Native client (`@emc/mobile`)
+- `apps/api` — Express + Prisma API (`@emc/api`)
+- `packages/shared` — shared Zod schemas and TypeScript types (`@emc/shared`)
+- `docs` — technical docs, setup, API reference, production notes, and handoff guide
 
-## Quickstart (Windows-first)
+## Quickstart
 
 1. Install dependencies:
 
@@ -19,66 +17,147 @@ The current repo is optimized for local development with Docker Postgres and moc
 pnpm install
 ```
 
-2. Start PostgreSQL:
+2. Create env files:
 
 ```bash
-docker compose up -d
+cp apps/api/.env.example apps/api/.env
+cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-3. Copy env files:
-
-- `apps/api/.env.example` -> `apps/api/.env`
-- `apps/mobile/.env.example` -> `apps/mobile/.env`
-
-4. Run Prisma workflow (prefer `pnpm exec` form):
+3. Start local infra (Postgres + Redis):
 
 ```bash
-pnpm --filter @emc/api exec prisma generate
-pnpm --filter @emc/api exec prisma migrate dev
-pnpm --filter @emc/api exec prisma db seed
+docker compose -f docker-compose.local.yml up -d
 ```
 
-5. Start development servers:
+4. Prepare database:
+
+```bash
+pnpm --filter @emc/api prisma:generate
+pnpm --filter @emc/api prisma:migrate
+pnpm --filter @emc/api prisma:seed
+```
+
+5. Start API + mobile dev servers:
 
 ```bash
 pnpm dev
 ```
 
-## Important
+## Dev workflow
 
-### Expo networking
+- Run both apps:
 
-- Physical device (Expo Go) must use your LAN IP, not `localhost`.
-- Android emulator should use `http://10.0.2.2:3001`.
+```bash
+pnpm dev
+```
 
-### Prisma EPERM rename lock on Windows
+- Run API only:
 
-If Prisma generate fails with EPERM/rename errors:
+```bash
+pnpm --filter @emc/api dev
+```
 
-1. Stop Node/TSX/Expo processes.
-2. Remove Prisma engine cache at:
-   `node_modules\\.pnpm\\@prisma+client@<version>_prisma@<version>\\node_modules\\.prisma`
-3. Re-run:
-   `pnpm --filter @emc/api exec prisma generate`
+- Run mobile only (via repo Expo wrapper):
 
-## Environment modes
+```bash
+pnpm --filter @emc/mobile dev
+```
 
-### Local development
+## Build workflow
 
-- PostgreSQL runs via Docker Compose.
-- `MOCK_STT`, `MOCK_TTS`, and `MOCK_LLM` can stay enabled for local flows without external provider keys.
+- Build all workspace packages/apps with build scripts:
 
-### Production
+```bash
+pnpm build
+```
 
-- Intended to run with external PostgreSQL and real STT/TTS/LLM providers.
-- Full production deployment/runbook is **Not implemented yet** in this repo.
+- Build API:
 
-## Docs
+```bash
+pnpm --filter @emc/api build
+```
 
-- [docs/README.md](docs/README.md)
-- [docs/SOURCE_OF_TRUTH.md](docs/SOURCE_OF_TRUTH.md)
-- [docs/SETUP.md](docs/SETUP.md)
-- [docs/API.md](docs/API.md)
-- [docs/DECISIONS.md](docs/DECISIONS.md)
-- [docs/PROGRESS.md](docs/PROGRESS.md)
-- [docs/HANDOFF.md](docs/HANDOFF.md)
+- Export mobile bundle (Expo export through wrapper):
+
+```bash
+pnpm --filter @emc/mobile build
+```
+
+## Testing
+
+- Run all tests that exist in the workspace:
+
+```bash
+pnpm test
+```
+
+- Run API tests only:
+
+```bash
+pnpm --filter @emc/api test
+```
+
+## Mock providers (current behavior)
+
+The API supports mock toggles for STT/TTS/LLM:
+
+- `MOCK_STT`
+- `MOCK_TTS`
+- `MOCK_LLM`
+
+In non-production environments, mocks default to enabled unless explicitly set. Real providers are currently scaffolded only; if a mock is disabled, the matching `*_PROVIDER` value must be set and implemented.
+
+## Database operations
+
+- Start DB stack:
+
+```bash
+docker compose -f docker-compose.local.yml up -d
+```
+
+- Stop DB stack:
+
+```bash
+docker compose -f docker-compose.local.yml down
+```
+
+- Reset DB data and reseed:
+
+```bash
+pnpm --filter @emc/api exec prisma migrate reset --force
+pnpm --filter @emc/api prisma:seed
+```
+
+## pnpm workspace + hoisting
+
+This repo uses pnpm workspaces (`pnpm-workspace.yaml`) and hoisted node linking:
+
+- Root `package.json`: `nodeLinker: hoisted`, `publicHoistPattern: ["*"]`
+- `.npmrc`: `node-linker=hoisted`, `public-hoist-pattern[]=*`, `shamefully-hoist=true`
+
+This is intentional and required for current Expo/React Native dependency resolution behavior.
+
+## Folder structure
+
+```text
+english-microcoach/
+├─ apps/
+│  ├─ api/
+│  │  ├─ prisma/
+│  │  ├─ src/
+│  │  └─ .env.example
+│  └─ mobile/
+│     ├─ scripts/expo.mjs
+│     ├─ src/
+│     └─ .env.example
+├─ packages/
+│  └─ shared/
+├─ docs/
+├─ docker-compose.yml
+├─ docker-compose.local.yml
+├─ docker-compose.prod.yml
+├─ package.json
+├─ pnpm-workspace.yaml
+└─ .npmrc
+```

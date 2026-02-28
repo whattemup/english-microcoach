@@ -1,11 +1,11 @@
-# Documentation
+# Documentation Index
 
-Central docs index for English MicroCoach.
+Canonical documentation for the current repository state.
 
-- [SOURCE_OF_TRUTH.md](./SOURCE_OF_TRUTH.md) — Canonical product, architecture, auth boundary, and scoring model.
-- [SETUP.md](./SETUP.md) — Windows-first local setup with Docker + Prisma workflow.
-- [API.md](./API.md) — Current endpoint contract (request/response and auth requirements).
-- [DECISIONS.md](./DECISIONS.md) — Lightweight architecture decision record.
-- [PROGRESS.md](./PROGRESS.md) — Baseline status, in-progress work, and next steps.
-- [HANDOFF.md](./HANDOFF.md) — Quick onboarding checklist for new contributors.
-
+- [SETUP.md](./SETUP.md) — local setup from clean clone.
+- [API.md](./API.md) — implemented HTTP routes and contracts.
+- [SOURCE_OF_TRUTH.md](./SOURCE_OF_TRUTH.md) — product + architecture summary.
+- [HANDOFF.md](./HANDOFF.md) — canonical technical handoff/spec.
+- [PRODUCTION.md](./PRODUCTION.md) — production environment/deploy notes.
+- [DECISIONS.md](./DECISIONS.md) — architecture decisions reflected in code.
+- [PROGRESS.md](./PROGRESS.md) — concise status snapshot.

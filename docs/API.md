@@ -1,139 +1,95 @@
 # API Reference
 
-## Base URL
+Base URL (local default): `http://localhost:3001`
 
-- Local default: `http://localhost:3001`
-
-## Auth header
-
-For protected endpoints, send:
+Auth for protected routes:
 
 ```http
 Authorization: Bearer <accessToken>
 ```
 
-## Endpoints
+## Health / readiness
 
-### Health
+### `GET /health`
+- Auth: no
+- Response: `{ "ok": true }`
 
-#### `GET /health`
-- Auth required: **No**
+### `GET /ready`
+- Auth: no
+- Checks DB and (optionally) Redis connectivity.
+- Returns `503` when dependencies are not ready.
 
-### Auth
+## Auth
 
-#### `POST /auth/register`
-- Auth required: **No**
+### `POST /auth/register`
+- Auth: no
+- Body: `{ "email": string, "password": string, "name"?: string }`
+- Response: `{ "accessToken": string, "refreshToken": string }`
 
-Request:
+### `POST /auth/login`
+- Auth: no
+- Body: `{ "email": string, "password": string }`
+- Response: `{ "accessToken": string, "refreshToken": string }`
 
-```json
-{ "name": "Ana", "email": "ana@example.com", "password": "StrongPass123" }
-```
+### `POST /auth/refresh`
+- Auth: no
+- Body: `{ "refreshToken": string }`
+- Response: `{ "accessToken": string, "refreshToken": string }`
 
-Response:
+## Catalog (public)
 
-```json
-{ "accessToken": "...", "refreshToken": "..." }
-```
+### `GET /categories`
+- Auth: no
+- Response: lesson categories.
 
-#### `POST /auth/login`
-- Auth required: **No**
+### `GET /lessons?categoryId=<number>`
+- Auth: no
+- `categoryId` is required.
 
-Request:
+### `GET /lessons/:id`
+- Auth: no
+- Returns lesson + phrases.
 
-```json
-{ "email": "ana@example.com", "password": "StrongPass123" }
-```
+## Attempts (protected)
 
-Response:
-
-```json
-{ "accessToken": "...", "refreshToken": "..." }
-```
-
-#### `POST /auth/refresh`
-- Auth required: **No**
-
-Request:
-
-```json
-{ "refreshToken": "..." }
-```
-
-Response:
-
-```json
-{ "accessToken": "...", "refreshToken": "..." }
-```
-
-### Public catalog
-
-#### `GET /categories`
-- Auth required: **No**
-
-#### `GET /lessons?categoryId=1`
-- Auth required: **No**
-
-#### `GET /lessons/:id`
-- Auth required: **No**
-
-### Attempts (protected)
-
-#### `POST /attempts`
-- Auth required: **Yes**
+### `POST /attempts`
+- Auth: yes
 - Content type: `multipart/form-data`
-- Fields read by handler:
+- Fields:
   - `audio` (file, required)
-  - `lessonPhraseId` (form field, number)
-  - `expectedText` (form field, string)
+  - `phraseId` (number, required)
+  - `expectedText` (string, required)
+- Response includes scoring output:
+  - `score`, `highlights`, `missing`, `extra`, `spanishTip`, `transcript`, `confidence`, `attemptId`
 
+## Roleplay (protected)
 
-Response:
-
-```json
-{
-  "score": 90,
-  "highlights": [{ "word": "hello", "status": "correct" }],
-  "missing": [],
-  "extra": [],
-  "spanishTip": "¡Muy bien! Tu pronunciación y precisión son sólidas.",
-  "transcript": "hello",
-  "confidence": 0.92,
-  "attemptId": 12
-}
-```
-
-### Roleplay (protected)
-
-#### `POST /roleplay`
-- Auth required: **Yes**
+### `POST /roleplay`
+- Auth: yes
 - Content type: `multipart/form-data`
-- Fields read by handler:
+- Fields:
   - `audio` (file, required)
-  - `context` (form field, string)
+  - `context` (string, required)
+- Response:
+  - `transcript`
+  - `corrected`
+  - `spanishExplanation`
+  - `nextSuggestedResponse`
 
+## Review (protected)
 
-Response:
+### `GET /review/today`
+- Auth: yes
+- Returns review items with related phrase/lesson.
 
-```json
-{
-  "transcript": "i need to reschedule my meeting",
-  "reply": "Sure, what day works best for you?",
-  "feedbackEs": "Buen inicio; añade una hora específica.",
-  "suggestedReply": "Could we move it to Thursday at 3 PM?"
-}
-```
+### `POST /review/submit`
+- Auth: yes
+- Body: `{ "reviewItemId": number, "quality": 0..5 }`
+- Updates SRS state and `dueDate`.
 
-### Review (protected)
+## Account (protected)
 
-#### `GET /review/today`
-- Auth required: **Yes**
-
-#### `POST /review/submit`
-- Auth required: **Yes**
-
-Request:
-
-```json
-{ "reviewItemId": 5, "quality": 4 }
-```
+### `DELETE /me`
+- Auth: yes
+- Hard-deletes current user and related attempts/mistakes/review items.
+- Response: `204 No Content`
