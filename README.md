@@ -1,163 +1,66 @@
 # English MicroCoach
 
-English MicroCoach is a pnpm workspace with an Expo mobile app and an Express API for short spoken-English practice loops: record audio, get deterministic scoring, and review weak phrases with SRS-backed scheduling.
+Monorepo (pnpm workspace) with:
+- `@emc/api` (`apps/api`): Express + Prisma + PostgreSQL.
+- `@emc/mobile` (`apps/mobile`): Expo React Native app.
+- `@emc/shared` (`packages/shared`): shared Zod schemas/types.
 
-## Architecture
+See canonical spec: [`docs/HANDOFF.md`](docs/HANDOFF.md).
 
-- `apps/mobile` — Expo React Native client (`@emc/mobile`)
-- `apps/api` — Express + Prisma API (`@emc/api`)
-- `packages/shared` — shared Zod schemas and TypeScript types (`@emc/shared`)
-- `docs` — technical docs, setup, API reference, production notes, and handoff guide
+## Current System Status
 
-## Quickstart
+- Mobile works end-to-end in **mock provider mode** (`MOCK_STT/TTS/LLM=true`).
+- API provider integrations are scaffolded behind interfaces; local dev without keys should keep mock mode on.
+- Mobile auth tokens are stored **in-memory only** (React context, no persistence).
+- Redis is optional:
+  - `/health` stays `200` if API process is up.
+  - `/ready` returns `503` when required dependencies are not ready (DB always; Redis only when `REDIS_URL` is configured).
 
-1. Install dependencies:
+## Quickstart (canonical)
 
 ```bash
 pnpm install
-```
-
-2. Create env files:
-
-```bash
 cp apps/api/.env.example apps/api/.env
 cp apps/mobile/.env.example apps/mobile/.env
-```
-
-3. Start local infra (Postgres + Redis):
-
-```bash
 docker compose -f docker-compose.local.yml up -d
-```
-
-4. Prepare database:
-
-```bash
 pnpm --filter @emc/api prisma:generate
 pnpm --filter @emc/api prisma:migrate
 pnpm --filter @emc/api prisma:seed
-```
-
-5. Start API + mobile dev servers:
-
-```bash
 pnpm dev
 ```
 
-## Dev workflow
-
-- Run both apps:
+## Core commands
 
 ```bash
-pnpm dev
-```
-
-- Run API only:
-
-```bash
+# API
 pnpm --filter @emc/api dev
-```
-
-- Run mobile only (via repo Expo wrapper):
-
-```bash
-pnpm --filter @emc/mobile dev
-```
-
-## Build workflow
-
-- Build all workspace packages/apps with build scripts:
-
-```bash
-pnpm build
-```
-
-- Build API:
-
-```bash
 pnpm --filter @emc/api build
-```
+pnpm --filter @emc/api test
 
-- Export mobile bundle (Expo export through wrapper):
-
-```bash
+# Mobile (wrapper-backed)
+pnpm --filter @emc/mobile dev
 pnpm --filter @emc/mobile build
-```
 
-## Testing
-
-- Run all tests that exist in the workspace:
-
-```bash
+# Workspace
+pnpm build
 pnpm test
 ```
 
-- Run API tests only:
+## Expo wrapper (mandatory)
 
-```bash
-pnpm --filter @emc/api test
-```
+Under pnpm hoisting, do not rely on global `expo`.
 
-## Mock providers (current behavior)
-
-The API supports mock toggles for STT/TTS/LLM:
-
-- `MOCK_STT`
-- `MOCK_TTS`
-- `MOCK_LLM`
-
-In non-production environments, mocks default to enabled unless explicitly set. Real providers are currently scaffolded only; if a mock is disabled, the matching `*_PROVIDER` value must be set and implemented.
-
-## Database operations
-
-- Start DB stack:
-
-```bash
-docker compose -f docker-compose.local.yml up -d
-```
-
-- Stop DB stack:
-
-```bash
-docker compose -f docker-compose.local.yml down
-```
-
-- Reset DB data and reseed:
-
-```bash
-pnpm --filter @emc/api exec prisma migrate reset --force
-pnpm --filter @emc/api prisma:seed
-```
+- `pnpm --filter @emc/mobile dev` runs `node ./scripts/expo.mjs start`
+- `pnpm --filter @emc/mobile build` runs `node ./scripts/expo.mjs export`
 
 ## pnpm workspace + hoisting
 
-This repo uses pnpm workspaces (`pnpm-workspace.yaml`) and hoisted node linking:
+This repo intentionally uses hoisted node resolution for Expo/Metro compatibility:
+- `pnpm-workspace.yaml` defines `apps/*` and `packages/*` workspaces.
+- `.npmrc` enables `node-linker=hoisted`, `public-hoist-pattern[]=*`, `shamefully-hoist=true`.
 
-- Root `package.json`: `nodeLinker: hoisted`, `publicHoistPattern: ["*"]`
-- `.npmrc`: `node-linker=hoisted`, `public-hoist-pattern[]=*`, `shamefully-hoist=true`
+## Troubleshooting
 
-This is intentional and required for current Expo/React Native dependency resolution behavior.
-
-## Folder structure
-
-```text
-english-microcoach/
-├─ apps/
-│  ├─ api/
-│  │  ├─ prisma/
-│  │  ├─ src/
-│  │  └─ .env.example
-│  └─ mobile/
-│     ├─ scripts/expo.mjs
-│     ├─ src/
-│     └─ .env.example
-├─ packages/
-│  └─ shared/
-├─ docs/
-├─ docker-compose.yml
-├─ docker-compose.local.yml
-├─ docker-compose.prod.yml
-├─ package.json
-├─ pnpm-workspace.yaml
-└─ .npmrc
-```
+- **PowerShell curl:** `curl` maps to `Invoke-WebRequest`; use `curl.exe` for real curl commands.
+- **Expo CLI/path errors:** run mobile commands through pnpm scripts (wrapper), not global Expo.
+- **Redis down:** expected behavior is `/health` `200`; `/ready` may be `503` when Redis is configured but unavailable.

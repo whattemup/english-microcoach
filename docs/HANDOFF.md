@@ -1,189 +1,229 @@
 # HANDOFF (Canonical Technical Spec)
 
-## 1) System architecture
+## 0. System Overview
 
-English MicroCoach is a pnpm monorepo with:
-- Mobile app (`apps/mobile`) built on Expo/React Native.
-- API (`apps/api`) built on Express + Prisma.
-- Shared package (`packages/shared`) for schemas/types.
+English MicroCoach is a speaking-practice system: mobile users record short audio responses, the API transcribes (mock-first), scores attempts, and schedules review items.
 
-Runtime dependencies:
-- PostgreSQL required.
-- Redis optional (rate-limit store + readiness detail when configured).
-- STT/TTS/LLM integrations currently mock-first.
+What it is now:
+- Functional local flow with mock STT/LLM/TTS.
+- JWT auth, lessons catalog, attempts, review queue, roleplay, account delete.
 
-## 2) Mobile architecture
+What it is not yet:
+- Real STT/TTS/LLM provider implementations (interfaces exist; runtime mock mode is the working path).
 
-- Navigation: native stack in `App.tsx`.
-- Auth state: in-memory React context (`AuthContext`).
-- API client: `src/api/client.ts` + endpoint helpers.
-- Audio capture: `expo-av` recording utility (`src/utils/audio.ts`).
-- Screens:
-  - `Login`, `Register`
-  - `Home` (categories)
-  - `Lessons`, `LessonDetail` (attempt recording/submission)
-  - `Roleplay`
-  - `Review`
-  - `Profile` (logout + delete account)
+## 1. Repo Map
 
-Expo command wrapper is mandatory and script-backed:
-- `pnpm --filter @emc/mobile dev` -> `node ./scripts/expo.mjs start`
-- `pnpm --filter @emc/mobile build` -> `node ./scripts/expo.mjs export`
+- `apps/api`: Express API, Prisma schema/migrations/seed.
+- `apps/mobile`: Expo app (must use `scripts/expo.mjs` wrapper).
+- `packages/shared`: shared Zod request schemas + TS DTO types.
+- `docs`: operational docs and API contract.
+- `docker-compose.local.yml`: local Postgres + Redis.
+- `docker-compose.prod.yml`: production topology (Postgres + Redis + API).
 
-## 3) API architecture
+## 2. Runtime Topology
 
-- App bootstrap: `src/app.ts` + `src/index.ts`.
-- Security middleware: `helmet`, `cors`, `compression`, rate limiting, auth middleware.
-- Upload handling: `multer` with audio MIME allowlist and size limit from env.
-- Route modules:
-  - `/auth`
-  - `/categories`
-  - `/lessons`
-  - `/attempts` (protected)
-  - `/roleplay` (protected)
-  - `/review` (protected)
-  - `/me` (protected)
-- Probes:
-  - `/health` liveness
-  - `/ready` dependency readiness (DB + optional Redis)
+`Mobile -> API -> Postgres`
 
-## 4) Shared package role
+Optional dependencies:
+- Redis for distributed rate-limit store and readiness checks when `REDIS_URL` is set.
 
-`@emc/shared` provides:
-- Request schemas (`registerSchema`, `loginSchema`, `attemptSchema`, etc.).
-- Shared TS interfaces for API DTOs.
+Providers:
+- Mock-first STT/TTS/LLM via `MOCK_STT`, `MOCK_TTS`, `MOCK_LLM`.
+- Real providers are selected by `STT_PROVIDER`, `TTS_PROVIDER`, `LLM_PROVIDER` when corresponding mock flag is `false`.
+- Current code only resolves `not_configured` provider, which returns `501 provider_not_configured` if mock is off.
 
-API imports schemas directly for route validation.
+## 3. Local Dev (Canonical Commands)
 
-## 5) Authentication flow
-
-1. User registers or logs in (`/auth/register` or `/auth/login`).
-2. API returns `accessToken` + `refreshToken`.
-3. Mobile stores both in memory (context).
-4. Protected requests send `Authorization: Bearer <accessToken>`.
-5. `/auth/refresh` exchanges refresh token for new token pair.
-
-## 6) Speech processing flow (implemented)
-
-Attempt flow (`POST /attempts`):
-1. Mobile records audio and uploads multipart form.
-2. API validates body (`phraseId`, `expectedText`) and file presence.
-3. STT service transcribes:
-   - Mock mode: transcript is `expectedText` (or fallback mock text).
-   - Real mode: delegated to configured provider interface.
-4. Scoring service computes score/highlights/missing/extra.
-5. API persists `Attempt` and updates mistake/review data.
-
-## 7) Scoring algorithm overview
-
-`scoreAttempt` implementation:
-- Normalize text to lowercase tokens and remove punctuation (unicode-aware).
-- Compute token Levenshtein distance.
-- Similarity = `1 - distance / max(expectedLen, actualLen, 1)`.
-- Score is rounded/clamped `0..100`.
-- Highlights generated as `correct`, `different`, `missing`, `extra`.
-
-## 8) Roleplay flow
-
-1. Mobile posts audio + `context` to `/roleplay`.
-2. API transcribes audio with STT service.
-3. API calls LLM service:
-   - Mock mode returns deterministic correction/explanation/next suggestion.
-   - Real mode delegates to provider interface (not implemented provider).
-4. Response includes `transcript`, `corrected`, `spanishExplanation`, `nextSuggestedResponse`.
-
-## 9) Spaced repetition logic
-
-Data model: `ReviewItem` with `dueDate`, `easeFactor`, `intervalDays`, `repetitions`.
-
-Lifecycle:
-- When attempts are weak (`score < 90` or missing words), API upserts due-now review item.
-- `/review/today` returns due items (`dueDate <= now`).
-- `/review/submit` applies `updateSrs(state, quality)`:
-  - quality `< 3`: reset repetitions, interval to 1.
-  - quality `>= 3`: progress intervals 1 -> 6 -> priorInterval * easeFactor.
-  - ease factor lower-bounded at `1.3`.
-
-## 10) Provider abstraction layer
-
-Provider interfaces in `src/providers/types.ts`:
-- `STTProvider.transcribeAudio`
-- `TTSProvider.synthesize`
-- `LLMProvider.roleplay`
-
-Current resolver behavior:
-- Only `not_configured` provider exists.
-- Mock flags should stay enabled unless real providers are added.
-
-## 11) How to add new lessons
-
-Current source of lesson content is the Prisma seed.
-
-1. Edit `apps/api/prisma/seed.ts`.
-2. Add/modify category, lesson, and phrase entries.
-3. Rerun seed:
+From repo root:
 
 ```bash
+pnpm install
+cp apps/api/.env.example apps/api/.env
+cp apps/mobile/.env.example apps/mobile/.env
+docker compose -f docker-compose.local.yml up -d
+pnpm --filter @emc/api prisma:generate
+pnpm --filter @emc/api prisma:migrate
+pnpm --filter @emc/api prisma:seed
+pnpm dev
+```
+
+Mobile wrapper commands (mandatory under pnpm hoisting):
+
+```bash
+pnpm --filter @emc/mobile dev    # node ./scripts/expo.mjs start
+pnpm --filter @emc/mobile build  # node ./scripts/expo.mjs export
+```
+
+## 4. API Architecture
+
+Bootstrap and middleware:
+- `src/app.ts`: Express app assembly.
+- `src/index.ts`: server startup/shutdown.
+- Middleware stack: `helmet`, dynamic `cors`, `compression`, JSON body parser, static `/uploads`, optional Redis-backed rate limiting with in-memory fallback.
+
+Probes:
+- `GET /health`: liveness (`{ ok: true }`), always process-level.
+- `GET /ready`: readiness checks DB and (if configured) Redis; returns `503` when not ready.
+
+Route mounting:
+- Public: `/auth`, `/categories`, `/lessons`.
+- Protected (`authMiddleware`): `/attempts`, `/roleplay`, `/review`, `/me`.
+
+## 5. Mobile Architecture
+
+- Navigation: native stack in `App.tsx`.
+- Auth: `AuthContext` stores `accessToken` and `refreshToken` in memory only.
+- API client: `src/api/client.ts` + `src/api/endpoints.ts`.
+- Audio recording: `expo-av` in `src/utils/audio.ts`.
+- Base URL: `EXPO_PUBLIC_API_URL` with Android localhost rewrite (`10.0.2.2`) in `src/api/baseUrl.ts`.
+- Main screens: Login, Register, Home, Lessons, LessonDetail, Roleplay, Review, Profile.
+
+## 6. Data Model (Prisma purpose summary)
+
+- `User`: account identity + password hash.
+- `LessonCategory`: top-level catalog grouping.
+- `Lesson`: lesson metadata tied to a category.
+- `LessonPhrase`: prompt phrase + translation + order within lesson.
+- `Attempt`: per-user speaking submission + transcript + score artifacts.
+- `Mistake`: aggregated missing-word counts per user/phrase/word.
+- `ReviewItem`: spaced-repetition state per user/phrase (`dueDate`, `intervalDays`, `repetitions`, `easeFactor`).
+
+## 7. Speech / Attempt Pipeline
+
+1. Mobile records audio and submits multipart form (`audio`, `phraseId`, `expectedText`) to `POST /attempts`.
+2. API validates body/file and phrase existence.
+3. STT stage:
+   - Mock: transcript = `expectedText` (or fallback mock text), confidence `0.93`.
+   - Real mode: provider interface call.
+4. Scoring stage: token normalization + Levenshtein-based similarity.
+5. Persistence:
+   - Save `Attempt`.
+   - Upsert `Mistake` rows for missing words.
+   - Upsert `ReviewItem` (due now, interval 1) when score < 90 or any missing words.
+6. Response includes score fields, transcript, confidence, and `attemptId`.
+
+## 8. Scoring Contract
+
+Inputs:
+- `expectedText` (reference), `transcript` (STT output).
+
+Normalization:
+- Lowercase, strip non letter/number/space/apostrophe chars, split tokens.
+
+Computation:
+- Token Levenshtein distance.
+- `similarity = 1 - distance / max(len(expected), len(actual), 1)`.
+- `score = round(similarity * 100)`, clamped `0..100`.
+
+Outputs:
+- `score`, `highlights[]` (`correct|missing|extra|different`), `missing[]`, `extra[]`, `spanishTip`.
+
+## 9. SRS Contract
+
+Shared/API contract currently enforces:
+- `quality`: integer `0..5` (`POST /review/submit`).
+
+SRS update behavior (`updateSrs`):
+- `quality < 3`: reset repetitions to `0`, interval to `1` day.
+- Else: increment repetitions, intervals follow `1`, `6`, then `round(interval * easeFactor)`.
+- `easeFactor` updated and clamped to minimum `1.3`.
+
+Mobile currently submits discrete quality values in this 0–5 range.
+
+## 10. Provider Abstraction
+
+- Interfaces: `STTProvider`, `TTSProvider`, `LLMProvider` in `src/providers/types.ts`.
+- Resolver services: `services/stt.ts`, `services/tts.ts`, `services/llm.ts`.
+- Env controls:
+  - Mock flags: `MOCK_STT`, `MOCK_TTS`, `MOCK_LLM`.
+  - Provider IDs: `STT_PROVIDER`, `TTS_PROVIDER`, `LLM_PROVIDER`.
+- Failure modes:
+  - Config boot failure if mock flag is false and provider is `not_configured`.
+  - Request-time `501` with `provider_not_configured` payload when unresolved provider path executes.
+
+## 11. Content / Seed
+
+Seed source: `apps/api/prisma/seed.ts`.
+
+Current seed result:
+- 3 categories (`Conversación`, `Trabajo`, `Vida diaria`).
+- 30 lessons total (10/category), 2 sample phrases per lesson.
+
+Reseed commands:
+
+```bash
+pnpm --filter @emc/api prisma:migrate
 pnpm --filter @emc/api prisma:seed
 ```
 
-For full reset + reseed:
+Destructive reset:
 
 ```bash
 pnpm --filter @emc/api exec prisma migrate reset --force
 pnpm --filter @emc/api prisma:seed
 ```
 
-## 12) How to extend content
+## 12. Deployment
 
-Implemented pattern is DB-driven content via Prisma models:
-- `LessonCategory` -> `Lesson` -> `LessonPhrase`.
+Local compose:
+- `docker-compose.local.yml` starts Postgres + Redis only.
 
-To extend:
-1. Add records through seed updates or direct DB writes.
-2. Keep required fields aligned with Prisma schema.
-3. Consume through existing public routes (`/categories`, `/lessons`, `/lessons/:id`).
+Production compose:
+- `docker-compose.prod.yml` runs Postgres + Redis + API.
+- API uses `UPLOAD_DIR=/data/uploads`; mount `uploads` volume.
 
-## 13) How to deploy
-
-Current repository includes `docker-compose.prod.yml` template and API Dockerfile.
-
-Baseline steps:
-1. Set production env/secrets.
-2. Run compose file:
+Production DB flow:
 
 ```bash
-docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+pnpm --filter @emc/api prisma:generate
+pnpm --filter @emc/api exec prisma migrate deploy
 ```
 
-3. Run Prisma migration process for production DB.
-4. Validate `/health` and `/ready`.
+Core env checklist: `DATABASE_URL`, JWT secrets, mock/provider toggles, upload/rate-limit/CORS/proxy settings.
 
-## 14) How to add a new provider
+## 13. Workflow Contract
 
-1. Implement provider class/module matching interface in `src/providers/types.ts`.
-2. Add resolver branch in service (`stt.ts`, `tts.ts`, or `llm.ts`).
-3. Define provider identifier via env (`STT_PROVIDER`, etc.).
-4. Set corresponding `MOCK_*` to `false` only after provider works.
-5. Add tests for fallback and provider path.
+- Use pnpm workspace commands from repo root.
+- Keep `pnpm-lock.yaml` committed with dependency changes.
+- Before merge, run:
 
-## 15) Known constraints
+```bash
+pnpm --filter @emc/api build
+pnpm --filter @emc/api test
+pnpm --filter @emc/mobile build
+pnpm --filter @emc/mobile dev -- --help
+```
 
-- Mobile auth tokens are in-memory only (no persistence across app restarts).
-- Provider integrations are scaffold-only; mock mode is required for functional local roleplay/attempt flows without extra implementation.
-- `LessonDetail` currently uses first phrase only in UI (`lesson.phrases[0]`).
-- Account deletion is irreversible hard delete.
-- Upload storage is local filesystem unless mounted volume is configured.
+- No separate CI workflow file is present; these local checks are the current required baseline.
 
-## 16) Production checklist
+## 14. Known Constraints / Intentional Simplifications
 
-- [ ] `NODE_ENV=production`
-- [ ] Strong JWT secrets set and managed outside git
-- [ ] `DATABASE_URL` points to production Postgres
-- [ ] `CORS_ORIGINS` explicitly configured
-- [ ] `TRUST_PROXY=true` behind reverse proxy
-- [ ] `REDIS_URL` configured for distributed rate limiting
-- [ ] `UPLOAD_DIR` points to durable writable storage
-- [ ] Mock provider strategy decided (`MOCK_*` values)
-- [ ] Health/readiness monitored
-- [ ] Backups and restore drills for Postgres
+### Implemented
+- Mock provider path works end-to-end locally.
+- Deterministic token-based scoring.
+- Basic SRS queue updates from review submissions.
+- Optional Redis with safe fallbacks.
+
+### Intentional Simplifications
+- Auth tokens are in-memory only on mobile.
+- Roleplay response is one-turn request/response.
+- Seed content is synthetic placeholder phrases.
+- Provider resolver only supports `not_configured` right now.
+
+### Extension Hooks
+- Add real provider adapters behind existing provider interfaces.
+- Persist tokens securely (e.g., secure storage) in mobile.
+- Expand scoring/phonetics while preserving current response contract.
+- Replace seed placeholders with curated curriculum content.
+
+## 15. Production Checklist
+
+- [ ] Set strong `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`.
+- [ ] Set `DATABASE_URL` to managed Postgres.
+- [ ] Set `UPLOAD_DIR` to writable persistent volume path.
+- [ ] Set `TRUST_PROXY=true` when behind reverse proxy.
+- [ ] Configure `CORS_ORIGINS` for real frontend origins.
+- [ ] Decide Redis strategy (`REDIS_URL` optional, recommended for multi-instance).
+- [ ] Decide provider mode (`MOCK_*` true/false) and matching provider vars.
+- [ ] Run `prisma migrate deploy` during release.
+- [ ] Probe `GET /health` and `GET /ready` after deploy.
