@@ -22,11 +22,15 @@ export interface LessonDTO {
 }
 
 export interface LessonDetailDTO extends LessonDTO {
-  phrases: Array<{
-    id: number;
-    expected: string;
-    translation: string;
-  }>;
+  phrases: LessonPhraseDTO[];
+}
+
+export interface LessonPhraseDTO {
+  id: number;
+  expected: string;
+  translation: string;
+  tags: string[];
+  order: number;
 }
 
 export interface AttemptResultDTO {

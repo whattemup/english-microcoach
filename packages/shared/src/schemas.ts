@@ -15,6 +15,15 @@ export const refreshSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token requerido')
 });
 
+
+export const lessonPhraseSchema = z.object({
+  id: z.number().int().positive(),
+  expected: z.string().min(1, 'Texto esperado requerido'),
+  translation: z.string().min(1, 'Traducción requerida'),
+  tags: z.array(z.string()),
+  order: z.number().int().nonnegative()
+});
+
 export const attemptSchema = z.object({
   phraseId: z.coerce.number().int().positive(),
   expectedText: z.string().min(1, 'Texto esperado requerido')
