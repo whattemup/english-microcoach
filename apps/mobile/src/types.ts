@@ -4,7 +4,14 @@ export type RootStackParamList = {
   Home: undefined;
   Lessons: { categoryId: number; title: string };
   LessonDetail: { lessonId: number };
-  Roleplay: undefined;
+  Roleplay:
+    | {
+        lessonId: number;
+        phraseId: number;
+        expected: string;
+        translation: string;
+      }
+    | undefined;
   Review: undefined;
   Profile: undefined;
 };
