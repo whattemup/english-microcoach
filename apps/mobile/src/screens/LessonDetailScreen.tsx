@@ -63,16 +63,35 @@ export const LessonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const hasPhrase = !!phrase?.expected;
   const canRecord = hasPhrase;
 
-  const handleSpeak = () => {
+  const handleSpeak = async () => {
+    console.log('[TTS] handleSpeak called');
     const textToSpeak = phrase?.expected?.trim();
+    console.log('[TTS] textToSpeak:', JSON.stringify(textToSpeak));
+
     if (!textToSpeak) {
       Alert.alert('Error', 'No hay frase para reproducir.');
       return;
     }
 
     try {
+      const voices = await Speech.getAvailableVoicesAsync();
+      console.log('[TTS] voice count:', voices.length);
+      console.log(
+        '[TTS] first voices:',
+        voices.slice(0, 3).map((voice: { language?: string; name?: string; quality?: string }) => ({
+          language: voice.language,
+          name: voice.name,
+          quality: voice.quality
+        }))
+      );
+    } catch (error) {
+      console.error('[TTS] getAvailableVoicesAsync failed', error);
+    }
+
+    try {
       Speech.stop();
       Speech.speak(textToSpeak, { language: 'en-US', rate: 0.9 });
+      console.log('[TTS] speak invoked');
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'No se pudo reproducir el audio.');
